@@ -1,10 +1,10 @@
 # ComfyUI-Internode
 
-![Internode ComfyUI Custom Nodes](./images/screenshot.png)
-
 ![Version](https://img.shields.io/badge/Version-3.0.7-green?style=for-the-badge) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20MacOS-blue?style=for-the-badge) ![License](https://img.shields.io/badge/License-MIT-orange?style=for-the-badge) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge)
 
-**ComfyUI-Internode** is a comprehensive, professional-grade Audio & Multimodal Workstation designed specifically for the ComfyUI ecosystem. It fundamentally transforms ComfyUI from an image-generation tool into a full-fledged **Generative Digital Audio Workstation (DAW)**.
+![Internode ComfyUI Custom Nodes](./images/screenshot.png)
+
+**ComfyUI-Internode** is a professional-grade Audio & Multimodal Workstation designed specifically for the ComfyUI ecosystem. It fundamentally transforms ComfyUI from an image-generation tool into a full-fledged **Generative Digital Audio Workstation (DAW)**.
 
 While standard audio nodes in ComfyUI typically offer simple playback or basic saving capabilities, Internode provides a complete signal processing pipeline. It integrates high-fidelity DSP mixing, VST3 plugin hosting, native AI music generation (ACE-Step), spectral editing, and advanced LLM orchestration.
 
@@ -17,6 +17,22 @@ While standard audio nodes in ComfyUI typically offer simple playback or basic s
 *   **Audio Reactivity:** Drive video generation (AnimateDiff) with precise frequency analysis and beat detection.
 *   **Spectral Editing:** Convert audio to images for "Audio Inpainting" using Stable Diffusion, then convert back to audio.
 *   **Multimodal LLM:** Give eyes and ears to local LLMs (Ollama/LocalAI) for complex analysis and prompt engineering.
+*   **Workflow Annotations:** Sticky notes and Markdown editors to document complex node graphs.
+
+---
+
+## 🚀 Version 3.0.7: The Studio Update
+
+As of version 3.0.7, **Internode** has undergone a major architectural restructuring to support massive future expansion.
+
+### Modular "Studio" Structure
+The codebase has been refactored from a flat file list into a Domain-Driven Design (`internode/dsp`, `internode/vst`, `internode/llm`, etc.).
+*   **Why this matters:** This modularity isolates dependencies. If an LLM update breaks, the Audio Mixer remains unaffected. It allows Internode to scale to hundreds of nodes without becoming unmaintainable.
+*   **For Developers:** The root `__init__.py` now acts as a central registry, importing from distinct sub-packages.
+
+### New UI Tools
+*   **Sticky Notes:** Customizable, color-coded notes to organize your graph.
+*   **Legacy VST Support:** Restored the `InternodeVSTLoader` to ensure older workflows continue to function alongside the new VST3 system.
 
 ---
 
@@ -42,8 +58,9 @@ While standard audio nodes in ComfyUI typically offer simple playback or basic s
 7.  [🌈 Section 5: Spectral Manipulation (Audio Inpainting)](#-section-5-spectral-manipulation-audio-inpainting)
 8.  [🤖 Section 6: OpenWebUI (LLM Integration)](#-section-6-openwebui-llm-integration)
 9.  [🛠️ Section 7: Utilities & Audio Tools](#-section-7-utilities--audio-tools)
-10. [📚 Workflow Scenarios](#-workflow-scenarios)
-11. [⚠️ Troubleshooting & FAQ](#-troubleshooting--faq)
+    *   [Markdown & Sticky Notes](#sticky-notes--markdown)
+    *   [Stem Splitter & Sidechain](#stem-splitter--sidechain)
+10. [⚠️ Troubleshooting & FAQ](#-troubleshooting--faq)
 
 ---
 
@@ -196,7 +213,7 @@ After all channels are summed together, they pass through the Master Bus for fin
 ### Outputs
 The Mixer provides two audio outputs for flexible routing:
 1.  **`master_output`**: The final production-ready mix. Contains all EQ, Compression, and Master Bus effects. Connect this to `Audio Saver`.
-2.  **`pre_master_output`**: The raw sum of all channels *before* the Master Bus effects are applied.
+2.  **`pre_master_output`**: The raw sum of all channels *before* the Master FX chain.
     *   *Use Case:* Connect this to a `InternodeVST3Effect` node loaded with iZotope Ozone or a dedicated mastering plugin if you prefer third-party mastering over the built-in Master Bus.
 
 ### Media Loaders & Savers
@@ -212,7 +229,7 @@ Designed for heavy video files.
 *   **`frame_load_cap`**: **CRITICAL PARAMETER.** Loading video frames into uncompressed tensors consumes massive RAM (approx 20MB per frame at 1080p).
     *   *Default:* 150 frames.
     *   *Usage:* Increase cautiously based on your system RAM.
-*   **`resize_mode`**: Downscales video on load (e.g., to 512x512). Use this if you are using the video frames for ControlNet or AnimateDiff, as full 4K resolution is usually unnecessary for conditioning.
+*   **`resize_mode`**: Downscales resolution (e.g., 512x512) to save VRAM during processing. Use this if you are using the video frames for ControlNet or AnimateDiff, as full 4K resolution is usually unnecessary for conditioning.
 
 #### **`InternodeAudioSaver`**
 *   **`filename_prefix`**: Subfolder/Filename pattern.
@@ -227,45 +244,54 @@ Designed for heavy video files.
 
 ## 🔌 Section 2: VST3 Integration (The Studio)
 
-This section turns ComfyUI into a plugin host.
+Internode allows ComfyUI to host industry-standard VST3 plugins. This is done via the `pedalboard` library.
+*Warning:* VST processing happens on the CPU. Audio tensors are moved from GPU to CPU, processed, and moved back. This may impact generation speed slightly.
 
-### VST Instruments (MIDI)
+### 🎹 VST3 Instrument (MIDI to Audio)
 **Node:** `InternodeVST3Instrument`
 
-Unlike effect plugins that process audio, Instruments *generate* audio from MIDI data.
+This node acts as a Synthesizer. It takes MIDI data and renders it into audio using a VST Instrument.
 
-*   **Inputs:**
-    *   **`midi_data`**: Requires a connection from `InternodeMidiLoader`.
-    *   **`vst_path`**: Absolute path to a valid `.vst3` instrument (e.g., Serum, Vital, Kontakt, Omnisphere).
-    *   **`sample_rate`**: The output quality.
-    *   **`duration_padding`**: Adds seconds of silence after the last MIDI note ends. This captures the decay of reverb or delay tails that would otherwise be cut off.
+*   **`midi_data`**: Connect an `InternodeMidiLoader` here.
+*   **`vst_path`**: Absolute path to a `.vst3` instrument (e.g., *Serum.vst3*, *Kontakt.vst3*).
+*   **`sample_rate`**: Render quality. Standard is 44100Hz.
+*   **`duration_padding`**: Adds silence to the end of the render to capture reverb tails or release samples.
+*   **`param_x`**: Connect `InternodeVST3Param` nodes here to automate knobs (e.g., Filter Cutoff) over time.
 
-### VST Effects
+### 🎛️ VST3 Effect (Audio FX)
 **Node:** `InternodeVST3Effect`
 
-Processes an incoming audio stream.
+Applies an audio effect to an existing waveform.
 
-*   **Inputs:**
-    *   **`audio`**: The waveform to process.
-    *   **`vst_path`**: Absolute path to a `.vst3` effect (e.g., FabFilter Pro-Q, Valhalla Reverb, distortion, chorus).
-    *   **`dry_wet`**: A global mix knob for the plugin.
-        *   `0.0`: Bypassed (Original signal).
-        *   `0.5`: 50% Original / 50% Effect.
-        *   `1.0`: 100% Wet (Effect only).
+*   **`audio`**: Input audio.
+*   **`vst_path`**: Absolute path to an effect plugin (e.g., *FabFilter Pro-Q3.vst3*, *ValhallaRoom.vst3*).
+*   **`dry_wet`**: Global mix control.
+    *   `0.0`: Bypassed (Original signal).
+    *   `0.5`: 50% Original / 50% Effect.
+    *   `1.0`: 100% Wet (Effect only).
 
-### Parameter Automation
+### 🎚️ VST3 Parameter Automation
 **Node:** `InternodeVST3Param`
 
-This is where the magic happens. You can control VST knobs using ComfyUI logic (Floats, LFOs, Audio Reactive Curves).
+Allows you to control any knob inside a VST plugin using ComfyUI values (Floats, Curves, LFOs).
 
-**Step-by-Step Automation Guide:**
-1.  **Identify the Parameter:** Create an `InternodeVST3Info` node. Paste your VST path into it and preview the output string. It will list every available parameter name (e.g., *"Filter Cutoff"*, *"Resonance"*, *"Mix"*).
-2.  **Configure Automation:** Create an `InternodeVST3Param` node.
-    *   **`param_name`**: Paste the *exact* name found in step 1.
-    *   **`value`**: Connect a Float node (or a batch of Floats/Curve) here.
-3.  **Connect:** Wire the `VST3Param` node into the `param_1`, `param_2`, etc., slots on the Instrument or Effect node.
+**Workflow:**
+1.  Add an **`InternodeVST3Info`** node.
+2.  Paste your VST path into it and preview the output text.
+3.  Find the exact parameter name you want (e.g., *"Master Volume"* or *"Cutoff"*).
+4.  Copy that name into the `param_name` widget of this node.
+5.  Connect a Float value to `value`.
+6.  Plug this node into `param_1` of the Instrument or Effect node.
 
-**Example:** Using the "Kick Drum" audio curve to modulate the "Threshold" of a Distortion plugin on a Bass track.
+### 🎼 MIDI Loader
+**Node:** `InternodeMidiLoader`
+
+*   **`midi_file`**: Loads a standard `.mid` file from the input directory.
+
+### 🕰️ Legacy VST Loader
+**Node:** `InternodeVSTLoader`
+
+*   A simplified wrapper for the Effect node. Kept for backward compatibility with v3.0.0 workflows. Recommended to use `InternodeVST3Effect` for new projects.
 
 ---
 
@@ -276,43 +302,43 @@ This is where the magic happens. You can control VST knobs using ComfyUI logic (
 This node runs the **ACE-Step** latent diffusion model locally on your GPU to generate music.
 
 *   **`prompt`**: Describes the genre, mood, instrumentation, and tempo.
-    *   *Effective Prompting:* "Techno, 140 BPM, Dark, Industrial, Aggressive Bass, SynthesizerArp"
-*   **`lyrics`**: (Experimental) Input text for the model to attempt to sing/rap. Adherence varies by seed.
-*   **`preview_mode` (Toggle)**:
-    *   **ON (True):** Generates 10 seconds of audio at only 20 inference steps. This is extremely fast and meant for "prompt surfing" to find a good seed.
-    *   **OFF (False):** Generates the full `audio_duration` at the full `infer_step` count. Use this for the final render.
-*   **`infer_step`**: The number of denoising steps.
+    *   *Example:* "Techno, 140 BPM, Aggressive, Industrial, Dark, Synthesizer"
+*   **`lyrics`**: Text for the model to "sing". (Note: ACE-Step lyric adherence varies; experimental).
+*   **`preview_mode`**:
+    *   **Enabled (Default):** Generates a 10-second clip at 20 inference steps. Use this for rapid prompt testing.
+    *   **Disabled:** Generates the full duration at the specified quality steps.
+*   **`audio_duration`**: Length of the track in seconds.
+*   **`infer_step`**: Number of diffusion steps.
     *   *Draft:* 20-30.
     *   *Standard:* 50.
     *   *High Quality:* 100+.
 *   **`guidance_scale`**: The CFG (Classifier Free Guidance) scale. Controls how strictly the model adheres to your prompt versus creative freedom.
     *   *Range:* 5.0 to 15.0 is usually the sweet spot.
-*   **`lora_name_or_path`**: Loads a `.safetensors` LoRA model to shift the style (e.g., "Chinese Rap LoRA", "Anime Voice LoRA").
+*   **`lora_name_or_path`**: Load a `.safetensors` LoRA model to shift the style (e.g., "Chinese Rap", "Anime Song").
 
 ---
 
 ## 📊 Section 4: Audio Reactivity & Video Sync
 
-These nodes are essential for AI Music Video creation. They translate sound into data that video generators (AnimateDiff, ControlNet) can understand.
+These tools allow you to drive ComfyUI video generation nodes (AnimateDiff, ControlNet) using audio data.
 
-### **`InternodeAudioToKeyframes`**
+### 📈 Audio to Keyframes
+**Node:** `InternodeAudioToKeyframes`
 
-*   **`fps`**: Set this to match your video project (e.g., 24, 30, 60). It ensures the output curve aligns perfectly frame-by-frame.
-*   **`mode`**:
-    *   **RMS (Volume):** Measures total energy. Good for global intensity, camera zoom, or noise strength.
-    *   **Low (Bass/Kick):** (20Hz - 250Hz). Good for syncing motion to the beat/kick drum.
-    *   **Mid (Vocals):** (250Hz - 4kHz). Good for reacting to lyrics or snare drums.
-    *   **High (Hats):** (4kHz+). Good for reacting to cymbals/shakers (jittery motion).
-    *   **Beat (Trigger):** A transient detector. It outputs a binary `1.0` (Hit) or `0.0` (No Hit). Excellent for hard cuts or triggering scene changes.
-*   **`smoothing`**: Applies an Exponential Moving Average to smooth out jittery values. Higher values = slower, smoother curves.
-*   **`amp_scale`**: Multiplies the result. If your curve is too subtle, turn this up.
-*   **`y_offset`**: Adds a base value. E.g., if you are controlling "Motion Scale" and want a minimum movement of 0.5, set this to 0.5.
+Analyzes the audio spectrum and outputs control curves.
+
+**Analysis Modes:**
+*   **RMS (Volume):** Tracks total loudness. Good for "breathing" or camera zoom effects.
+*   **Low (Bass/Kick):** Isolates 20Hz-250Hz. Perfect for syncing to kick drums.
+*   **Mid (Vocals):** Isolates 250Hz-4kHz. Good for lip-sync approximation or reacting to melodies.
+*   **High (Hats):** Isolates 4kHz+. Reacts to hi-hats and cymbals.
+*   **Beat (Trigger):** A transient detector. Outputs `1.0` when a beat is detected and `0.0` otherwise. Useful for hard cuts or flash frames.
 
 **Outputs:**
-1.  **`float_curve`**: A raw list/batch of floats. Connect this to "Batch Float" nodes.
-2.  **`schedule_str`**: A formatted text string compatible with **ComfyUI-Advanced-ControlNet** (Value Scheduling).
-    *   *Format:* `0:(0.1), 1:(0.5), 2:(0.3)...`
-3.  **`curve_image`**: A generated graph image. Preview this to visually verify that your beats are syncing before you spend hours rendering video.
+*   `float_curve`: A raw list of floats. Use this with "Batch Float" nodes.
+*   `schedule_str`: A formatted string (e.g., `0:(0.0), 1:(0.5), 2:(0.8)...`).
+    *   *Compatibility:* Works directly with **ComfyUI-Advanced-ControlNet** (Value Scheduling) and **AnimateDiff-Evolved**.
+*   `curve_image`: A visual graph (image) of the curve. Useful for debugging synchronization before rendering the video.
 
 ---
 
@@ -330,7 +356,7 @@ This workflow allows you to edit audio using Image Editing techniques.
     *   **`n_fft`**: The FFT window size.
         *   *Higher (2048+):* Better frequency detail (you can see individual notes), but blurry timing.
         *   *Lower (512):* Better timing (sharp drum hits), but blurry frequency.
-    *   **`hop_length`**: How often we sample the window. Controls the width of the resulting image.
+    *   **`hop_length`**: How often the window samples. Controls the width of the resulting image.
 *   **`InternodeImageToAudio`**:
     *   Uses the **Griffin-Lim** algorithm to estimate phase information (since standard images don't contain phase data).
     *   **`n_iter`**: The number of reconstruction passes. Higher (64+) results in less robotic/metallic artifacts but takes longer to process.
@@ -356,19 +382,31 @@ This node allows you to connect ComfyUI to a running instance of **OpenWebUI** (
 
 ## 🛠️ Section 7: Utilities & Audio Tools
 
-### **`InternodeMarkdownNote`**
-A persistent text editor for documenting your complex workflows.
-*   **Persistence:** Text entered here is saved inside the workflow `.json` metadata. It survives page reloads.
-*   **Security:** Includes a sanitizer that strips malicious Javascript vectors (`<script>`, `onclick`) to ensure shared workflows are safe to open.
+### Sticky Notes & Markdown
+Essential tools for workflow documentation.
 
-### **`InternodeSidechain` (The Ducker)**
+*   **`InternodeStickyNote` (NEW):**
+    *   A highly visible, resizeable "Post-it" style note.
+    *   **Customization:** Change Background Color (Yellow, Pink, Blue, etc.) and Text Color to color-code your graph.
+    *   **Usage:** Perfect for leaving instructions or TODOs on top of node groups.
+*   **`InternodeMarkdownNote`:**
+    *   A full-featured Markdown editor.
+    *   **Features:** Headers, Lists, Code Blocks, Tables.
+    *   **Security:** Automatically sanitizes HTML to prevent XSS attacks (strips `<script>` tags).
+    *   **Persistence:** Text is saved inside the workflow JSON and restores automatically on load.
+
+### Sidechain (The Ducker)
+**Node:** `InternodeSidechain`
+
 A mixing utility essential for voiceovers. It lowers the volume of the `music` input whenever signal is detected on the `voice` input.
 *   **`threshold`**: Sensitivity. Lower values trigger ducking more easily.
 *   **`ratio`**: Compression strength. `4.0` means the music is reduced by a factor of 4.
 *   **`attack`**: How quickly the music fades out when the voice starts. (Fast = 10ms).
 *   **`release`**: How slowly the music fades back in after the voice stops. (Slow = 500ms).
 
-### **`InternodeStemSplitter`**
+### Stem Splitter
+**Node:** `InternodeStemSplitter`
+
 Uses the **Demucs** Hybrid Transformer model to un-mix a song.
 *   Takes a full song as input.
 *   Outputs 4 separate audio streams: **Drums**, **Bass**, **Vocals**, **Other** (Melody).
@@ -406,6 +444,10 @@ Uses the **Demucs** Hybrid Transformer model to un-mix a song.
 **Solution:**
 1.  Check `amp_scale`. Your audio might be too quiet. Increase to 2.0 or 5.0.
 2.  Check the `mode`. If you selected "High (Hats)" but your audio is a bass guitar, there is no data in that frequency band.
+
+### 🟠 Problem: Markdown/Sticky Note text disappears when I reload.
+**Solution:**
+Ensure you are using **Internode v3.0.7**. We pushed a hotfix to handle DOM serialization correctly. Older versions did not re-populate the text box after the browser refreshed.
 
 ---
 
