@@ -3,7 +3,7 @@
   "id": "comfyui-internode",
   "author": "pkeffect",
   "description": "A powerful node pack containing Audio Mixers (DSP), ACE-Step Music Generation, OpenWebUI Integration, and Markdown utilities.",
-  "version": "2.9.0",
+  "version": "3.0.0",
   "nodes": [
     {
       "name": "InternodeAceStepLoader",

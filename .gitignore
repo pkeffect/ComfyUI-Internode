@@ -1,4 +1,6 @@
 # Byte-compiled / optimized / DLL files
+# VERSION 3.0.0
+
 __pycache__/
 *.py[codz]
 *$py.class

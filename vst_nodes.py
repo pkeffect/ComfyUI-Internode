@@ -1,4 +1,6 @@
 # ComfyUI/custom_nodes/ComfyUI-Internode/vst_nodes.py
+# VERSION: 3.0.0
+
 import torch
 import numpy as np
 import os

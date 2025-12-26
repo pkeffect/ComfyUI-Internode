@@ -1,5 +1,5 @@
-# ComfyUI/custom_nodes/comfyui-internode-nodes/openwebui_api.py
-# VERSION: 1.4.0
+# ComfyUI/custom_nodes/ComfyUI-Internode/openwebui_api.py
+# VERSION: 3.0.0
 
 import requests
 import base64

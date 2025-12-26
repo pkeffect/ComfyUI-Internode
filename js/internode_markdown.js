@@ -1,5 +1,5 @@
-// ComfyUI/custom_nodes/comfyui-internode-nodes/js/internode_markdown.js
-// VERSION: 2.0.0
+// ComfyUI/custom_nodes/ComfyUI-Internode/js/internode_markdown.js
+// VERSION: 3.0.0
 
 import { app } from "../../scripts/app.js";
 

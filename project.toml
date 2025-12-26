@@ -1,7 +1,7 @@
 [project]
 name = "comfyui-internode"
 description = "A comprehensive suite of Audio, DSP, Mixing, Markdown, and OpenWebUI integration nodes for ComfyUI."
-version = "2.9.2"
+version = "3.0.0"
 license = { text = "MIT" }
 dependencies = [
     "requests",

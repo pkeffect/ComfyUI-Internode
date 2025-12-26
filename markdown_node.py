@@ -1,5 +1,5 @@
-# ComfyUI/custom_nodes/comfyui-internode-nodes/markdown_node.py
-# VERSION: 1.3.0
+# ComfyUI/custom_nodes/ComfyUI-Internode/markdown_node.py
+# VERSION: 3.0.0
 
 class InternodeMarkdownNote:
     """

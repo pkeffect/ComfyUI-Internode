@@ -1,5 +1,5 @@
 // ComfyUI/custom_nodes/ComfyUI-Internode/js/internode_mixer.js
-// VERSION: 4.3.1 (Hotfix: Hide Standard Widgets)
+// VERSION: 3.0.0
 
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";

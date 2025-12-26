@@ -1,5 +1,5 @@
-# ComfyUI/custom_nodes/comfyui-internode-nodes/__init__.py
-# VERSION: 2.9.1
+# ComfyUI/custom_nodes/ComfyUI-Internode/__init__.py
+# VERSION: 3.0.0
 
 import importlib.util
 import importlib.metadata
