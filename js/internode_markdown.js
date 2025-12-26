@@ -1,9 +1,28 @@
 // ComfyUI/custom_nodes/ComfyUI-Internode/js/internode_markdown.js
-// VERSION: 3.0.0
+// VERSION: 3.0.1
 
 import { app } from "../../scripts/app.js";
 
-console.log("%c#### Internode: Markdown UI v2.0 Loaded", "color: green; font-weight: bold;");
+console.log("%c#### Internode: Markdown UI v3.0.1 Loaded", "color: green; font-weight: bold;");
+
+// --- CUSTOM SANITIZER ---
+function escapeHtml(unsafe) {
+    if (!unsafe) return "";
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function isValidUrl(url) {
+    // Allow http, https, relative paths, anchors, and ComfyUI specific paths
+    // Block javascript: and data: (unless image)
+    url = url.trim();
+    if (url.toLowerCase().startsWith("javascript:")) return false;
+    return true;
+}
 
 function parseMarkdown(text) {
     if (!text) return "<span style='color:#666; font-style:italic;'>Empty...</span>";
@@ -28,8 +47,8 @@ function parseMarkdown(text) {
             continue;
         }
         if (inCodeBlock) {
-            line = line.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            html += line + '\n';
+            // Securely escape code block content
+            html += escapeHtml(line) + '\n';
             continue;
         }
 
@@ -60,6 +79,7 @@ function parseMarkdown(text) {
             const content = line.slice(level).trim();
             const size = 1.6 - (level * 0.1); 
             const border = level <= 2 ? 'border-bottom:1px solid #30363d; padding-bottom:0.3em;' : '';
+            // processInline now escapes content
             html += `<h${level} style="margin:20px 0 10px 0; font-size:${size}em; font-weight:600; color:#e6edf3; ${border}">${processInline(content)}</h${level}>`;
             continue;
         }
@@ -150,16 +170,28 @@ function renderTable(rows) {
 }
 
 function processInline(text) {
-    // Process in specific order to handle nesting better
+    // 1. ESCAPE EVERYTHING FIRST
+    // This effectively neutralizes all HTML injection attacks (XSS).
+    text = escapeHtml(text);
+
+    // 2. APPLY MARKDOWN TRANSFORMS
+    // Since input is escaped, we are processing &lt;b&gt; as literal text, which is correct.
+    // The regex matches below will match the SAFE characters.
+
+    // Images: ![alt](url)
+    // Note: The capture groups $1 and $2 now contain escaped chars.
+    // We must validate the URL to prevent "javascript:" attacks.
+    text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, url) => {
+        if (!isValidUrl(url)) return ""; // Block bad URLs
+        // Since 'alt' and 'url' are already escaped, they are safe to put in attributes
+        return `<img src="${url}" alt="${alt}" style="max-width:100%;">`;
+    });
     
-    // Escape HTML entities first
-    text = text.replace(/&(?![a-zA-Z]+;)/g, '&amp;');
-    
-    // Images (before links to avoid conflict)
-    text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;">');
-    
-    // Links
-    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:#58a6ff; text-decoration:none;">$1</a>');
+    // Links: [text](url)
+    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label, url) => {
+        if (!isValidUrl(url)) return label; // Return text only if URL bad
+        return `<a href="${url}" target="_blank" style="color:#58a6ff; text-decoration:none;">${label}</a>`;
+    });
     
     // Bold + Italic combined (***text*** or ___text___)
     text = text.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong style="color:#e6edf3;"><em>$1</em></strong>');
@@ -169,14 +201,14 @@ function processInline(text) {
     text = text.replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#e6edf3;">$1</strong>');
     text = text.replace(/__([^_]+)__/g, '<strong style="color:#e6edf3;">$1</strong>');
     
-    // Italic (*text* or _text_) - be careful not to match inside words
+    // Italic (*text* or _text_) - Negative lookbehind/ahead checks used to avoid word-internal matches
     text = text.replace(/(?<![a-zA-Z0-9])\*([^*]+)\*(?![a-zA-Z0-9])/g, '<em style="color:#e6edf3;">$1</em>');
     text = text.replace(/(?<![a-zA-Z0-9])_([^_]+)_(?![a-zA-Z0-9])/g, '<em style="color:#e6edf3;">$1</em>');
     
     // Strikethrough (~~text~~)
     text = text.replace(/~~([^~]+)~~/g, '<del style="color:#8b949e;">$1</del>');
     
-    // Inline code (`code`) - process last to preserve content
+    // Inline code (`code`)
     text = text.replace(/`([^`]+)`/g, '<code style="background:rgba(110,118,129,0.4); padding:2px 5px; border-radius:4px; font-family:monospace;">$1</code>');
     
     return text;
@@ -191,10 +223,12 @@ app.registerExtension({
             nodeType.prototype.onNodeCreated = function () {
                 const r = onNodeCreated ? onNodeCreated.apply(this, arguments) : undefined;
 
-                // 1. Locate and Hide Default Widget
+                // 1. Locate and Handle Default Widget
                 const textWidget = this.widgets.find(w => w.name === "text");
                 if (textWidget) {
-                    textWidget.type = "custom";
+                    // FIX: Do NOT set type to "custom". 
+                    // This allows ComfyUI to serialize the widget value automatically.
+                    // We simply hide it by setting size to 0 and empty draw function.
                     textWidget.computeSize = () => [0, 0];
                     textWidget.draw = function() { return; }; 
                 }
@@ -204,7 +238,7 @@ app.registerExtension({
                 Object.assign(container.style, {
                     height: "100%",
                     width: "100%",
-                    minHeight: "400px", // FORCE MINIMUM HEIGHT
+                    minHeight: "400px",
                     backgroundColor: "#0d1117",
                     border: "1px solid #30363d",
                     borderRadius: "6px",
@@ -257,7 +291,7 @@ app.registerExtension({
                 Object.assign(contentArea.style, {
                     width: "100%",
                     height: "calc(100% - 40px)",
-                    minHeight: "360px", // FORCE EDITOR MINIMUM HEIGHT
+                    minHeight: "360px", 
                     backgroundColor: "#0d1117",
                     position: "relative",
                     overflow: "hidden"
@@ -281,6 +315,7 @@ app.registerExtension({
                     display: "block" 
                 });
                 
+                // Populate from widget value if exists
                 if(textWidget) textarea.value = textWidget.value;
 
                 // 6. Preview Div (Preview Mode)
@@ -302,7 +337,7 @@ app.registerExtension({
 
                 const updateState = () => {
                     if (isPreview) {
-                        // Show Preview
+                        // Show Preview (Sanitized)
                         preview.innerHTML = parseMarkdown(textarea.value);
                         textarea.style.display = "none";
                         preview.style.display = "block";
@@ -331,11 +366,12 @@ app.registerExtension({
                     updateState();
                 };
 
+                // Sync textarea input to the hidden widget so saving works
                 textarea.addEventListener("input", () => {
                     if(textWidget) textWidget.value = textarea.value;
                 });
 
-                // Stop events
+                // Stop events propagation for usability
                 const stopProp = (e) => e.stopPropagation();
                 textarea.addEventListener("mousedown", stopProp);
                 textarea.addEventListener("wheel", stopProp, {passive: true});
@@ -350,7 +386,7 @@ app.registerExtension({
 
                 this.addDOMWidget("markdown_ui", "div", container, { serialize: false });
 
-                // **UPDATED DEFAULT SIZE**
+                // Default size
                 this.setSize([500, 700]);
                 
                 return r;

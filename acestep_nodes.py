@@ -1,5 +1,5 @@
 # ComfyUI/custom_nodes/ComfyUI-Internode/acestep_nodes.py
-# VERSION: 3.0.0
+# VERSION: 3.0.1
 
 import os
 import sys
@@ -8,36 +8,7 @@ import folder_paths
 import torch
 import numpy as np
 
-# --- Dependency Handling ---
-_install_lock = threading.Lock()
-_install_attempted = False
-
-def install_dependencies_async():
-    """Non-blocking dependency installation in background thread"""
-    global _install_attempted
-    with _install_lock:
-        if _install_attempted:
-            return
-        _install_attempted = True
-    
-    def _install():
-        import subprocess
-        req_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "requirements.txt")
-        print(f"#### Internode: Installing dependencies in background from {req_file}...")
-        try:
-            subprocess.check_call(
-                [sys.executable, "-m", "pip", "install", "-r", req_file],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE
-            )
-            print("#### Internode: Dependencies installed successfully. Restart ComfyUI to use ACE-Step.")
-        except Exception as e:
-            print(f"#### Internode Error: Could not install dependencies: {e}")
-    
-    thread = threading.Thread(target=_install, daemon=True)
-    thread.start()
-
-# Try imports, schedule background install if missing
+# Try imports
 DiffusionPipeline = None
 write_wav = None
 
@@ -45,8 +16,7 @@ try:
     from diffusers import DiffusionPipeline
     from scipy.io.wavfile import write as write_wav
 except ImportError:
-    print("#### Internode: Missing dependencies (diffusers/scipy). Starting background install...")
-    install_dependencies_async()
+    print("#### Internode: Missing dependencies (diffusers/scipy). Please run install.py or use ComfyUI Manager to install.")
 
 # --- Model Cache Management ---
 _model_cache = {}
@@ -116,7 +86,7 @@ class InternodeAceStepLoader:
 
     def load_model(self, model_name, device, clear_cache=False):
         if DiffusionPipeline is None:
-            raise ImportError("Diffusers library not loaded. Dependencies are installing in background - please restart ComfyUI.")
+            raise ImportError("Diffusers library not loaded. Please run 'install.py' inside the custom node folder or install requirements via ComfyUI Manager.")
 
         if clear_cache:
             clear_model_cache()

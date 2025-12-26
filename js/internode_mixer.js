@@ -1,10 +1,10 @@
 // ComfyUI/custom_nodes/ComfyUI-Internode/js/internode_mixer.js
-// VERSION: 3.0.0
+// VERSION: 3.0.2
 
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 
-console.log("%c#### Internode: Mixer UI v4.3.1 Loaded (UI Restoration)", "color: orange; font-weight: bold;");
+console.log("%c#### Internode: Mixer UI v3.0.2 Loaded (Layout Fix)", "color: orange; font-weight: bold;");
 
 // --- CONSTANTS ---
 const DEFAULTS = {
@@ -538,11 +538,7 @@ function buildMixerUI(node, channelCount) {
     // so they don't clutter the node, but keep them for logic.
     if (node.widgets) {
         node.widgets.forEach(w => {
-            // standard comyui way to hide widget: computeSize returns [0, -4]
             w.computeSize = () => [0, -4];
-            // Optionally, we can set type to "hidden" but that might affect saving values
-            // depending on Comfy version. computeSize is safest for visual hiding.
-            // Some themes might need type="custom" to fully hide.
         });
     }
 
@@ -557,20 +553,40 @@ function buildMixerUI(node, channelCount) {
     };
     requestAnimationFrame(paramLoop);
 
+    // ROOT CONTAINER (Holds Scrollable Mixer + Footer)
+    const root = document.createElement("div");
+    Object.assign(root.style, {
+        width: "100%", height: "100%",
+        display: "flex", flexDirection: "column",
+        backgroundColor: "#111", borderRadius: "6px",
+        overflow: "hidden"
+    });
+
+    // SCROLLABLE MIXER AREA (This mimics the old 'container' behavior)
     const container = document.createElement("div");
     node.ui_container = container; 
 
     Object.assign(container.style, { 
         display: "flex", flexDirection: "row", 
-        backgroundColor: "#111", borderRadius: "6px", padding: "8px", boxSizing: "border-box", gap: "4px", 
-        width: "100%", height: "100%", 
+        padding: "8px", boxSizing: "border-box", gap: "4px", 
+        width: "100%", flex: "1", // Take remaining height
         overflowX: "auto", overflowY: "hidden",
         alignItems: "stretch", touchAction: "none" 
     });
     
+    // FOOTER (Warning)
+    const footer = document.createElement("div");
+    Object.assign(footer.style, {
+        width: "100%", padding: "2px 5px",
+        backgroundColor: "#221100", borderTop: "1px solid #553300",
+        color: "#fa0", fontSize: "9px", fontFamily: "sans-serif",
+        textAlign: "center", boxSizing: "border-box", flexShrink: "0"
+    });
+    footer.innerHTML = "⚠ <b>PREVIEW MODE:</b> Web Audio Approximation. Final render (PyTorch) may vary.";
+
     const stop = (e) => e.stopPropagation();
-    container.addEventListener("pointerdown", stop); 
-    container.addEventListener("wheel", stop, {passive: true});
+    root.addEventListener("pointerdown", stop); 
+    root.addEventListener("wheel", stop, {passive: true});
 
     const doReset = () => {
         if(confirm("Reset all mixer settings?")) {
@@ -687,11 +703,16 @@ function buildMixerUI(node, channelCount) {
     master.appendChild(mFaderRow);
     container.appendChild(master);
 
-    node.addDOMWidget("mixer_ui", "div", container, { serialize: false });
+    // Add Parts to Root
+    root.appendChild(container);
+    root.appendChild(footer);
+
+    node.addDOMWidget("mixer_ui", "div", root, { serialize: false });
     
     // Resize node to fit custom UI
+    // Width calc based on channel count + master strip
     const width = (channelCount * 54) + 70; 
-    node.setSize([width, 680]); 
+    node.setSize([width, 700]); 
 }
 
 app.registerExtension({

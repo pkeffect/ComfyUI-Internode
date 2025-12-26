@@ -8,7 +8,7 @@ import sys
 import subprocess
 import re
 
-print("#### Internode: Initializing Node Pack...")
+print("#### Internode: Initializing Node Pack VERSION 3.0.0...")
 
 # --- Dependency Management ---
 

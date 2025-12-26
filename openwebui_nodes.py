@@ -1,5 +1,5 @@
 # ComfyUI/custom_nodes/ComfyUI-Internode/openwebui_nodes.py
-# VERSION: 3.0.0
+# VERSION: 3.0.1
 
 import torch
 from .openwebui_api import OpenWebUIAPI
@@ -129,6 +129,8 @@ class OpenWebUINode:
         if history and history.strip():
             try:
                 messages = json.loads(history)
+                if not isinstance(messages, list):
+                    messages = []
             except Exception:
                 print("#### Internode: Could not parse history JSON. Starting new context.")
                 messages = []
@@ -165,29 +167,21 @@ class OpenWebUINode:
                 wavfile.write(buffered, sample_rate, audio_np)
                 b64_audio = base64.b64encode(buffered.getvalue()).decode()
 
-        # Construct new call
-        # Since OpenWebUIAPI wrapper does mostly "chat completions" logic, 
-        # we will simulate history by concatenating context or just calling the chat endpoint.
-        # But wait, the previous API wrapper was simple. We might need to adjust it to accept history.
-        # For this audit fix, we will just use the prompt as the latest user message, 
-        # but we lack a way to inject history into the OpenWebUIAPI class without modifying that file too.
-        # Assumption: We only modify openwebui_nodes.py. 
-        # Workaround: Concatenate history to prompt? No, that's bad.
-        
-        # Since we can't edit `openwebui_api.py` (not requested in prompt), we assume standard 
-        # chat API usage.
-        
         print(f"#### Internode: Sending to OpenWebUI (Model: {target_model})")
         
-        # Currently the API wrapper only handles single turn in `chat_completions`.
-        # We will just append the *result* to our local history JSON.
-        # For true multi-turn, we would need to rewrite the API wrapper to accept `messages` list.
-        # Given constraints, we will just return the JSON so the user can save it,
-        # even if we can't fully re-inject it into the *next* call without API changes.
+        # Call API passing the *existing* history. 
+        # The API method will handle attaching the NEW multimodal content + prompt 
+        # to the end of this history for the actual request.
+        response_text = api.chat_completions(
+            target_model, 
+            prompt, 
+            messages=messages, 
+            images=pil_images, 
+            audio=b64_audio
+        )
         
-        response_text = api.chat_completions(target_model, prompt, images=pil_images, audio=b64_audio)
-        
-        # Update History
+        # Update History for the OUTPUT
+        # We store only the text prompt to prevent the history string from becoming massive (saving Base64 to workflow JSON is bad)
         messages.append({"role": "user", "content": prompt})
         messages.append({"role": "assistant", "content": response_text})
         

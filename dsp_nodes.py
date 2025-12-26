@@ -1,5 +1,5 @@
 # ComfyUI/custom_nodes/ComfyUI-Internode/dsp_nodes.py
-# VERSION: 3.0.0
+# VERSION: 3.0.1
 
 import os
 import torch
@@ -429,26 +429,29 @@ class InternodeAudioMixer:
         return self._process_mix(tracks, master_vol, master_gate, master_comp, (master_eq_low, master_eq_mid, master_eq_high), master_balance, master_width, (master_drive, master_locut, master_hicut, master_ceil))
 
     def _apply_eq(self, w, sr, l, m, h):
-        # Optimized Torchaudio EQ
         if l == 1.0 and m == 1.0 and h == 1.0: return w
         
-        # Audio is [Batch, Channel, Time]
-        # Torchaudio functional filters expect [..., Time]
+        # Helper to convert linear gain to dB
+        def get_db(g):
+            if g <= 0.001: return -60.0 # Floor for "kill"
+            return 20.0 * np.log10(g)
+
+        # Apply Serial EQ (Shelving/Peaking) to avoid phase cancellation artifacts
+        # inherent in split-and-sum isolator topologies.
         
-        # Split bands
-        # Bass: Lowpass < 250Hz
-        low_part = F.lowpass_biquad(w, sr, cutoff_freq=250.0)
-        
-        # High: Highpass > 4000Hz
-        high_part = F.highpass_biquad(w, sr, cutoff_freq=4000.0)
-        
-        # Mid: Approximate by subtraction to maintain phase coherence
-        # (This is a simplified DJ isolation EQ)
-        mid_part = w - low_part - high_part
-        
-        # Recombine with gains
-        out = (low_part * l) + (mid_part * m) + (high_part * h)
-        return out
+        # Low Shelf (Bass) @ 250Hz
+        if l != 1.0:
+            w = F.bass_biquad(w, sr, gain=get_db(l), central_freq=250.0, Q=0.707)
+            
+        # Mid Peaking (Mid) @ 1000Hz, Q=0.707
+        if m != 1.0:
+            w = F.equalizer_biquad(w, sr, center_freq=1000.0, gain=get_db(m), Q=0.707)
+            
+        # High Shelf (Treble) @ 4000Hz
+        if h != 1.0:
+            w = F.treble_biquad(w, sr, gain=get_db(h), central_freq=4000.0, Q=0.707)
+            
+        return w
         
     def _apply_dynamics(self, w, gate, comp):
         if gate == 0 and comp == 0: return w
