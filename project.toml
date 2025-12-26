@@ -1,0 +1,38 @@
+[project]
+name = "comfyui-internode"
+description = "A comprehensive suite of Audio, DSP, Mixing, Markdown, and OpenWebUI integration nodes for ComfyUI."
+version = "2.9.2"
+license = { text = "MIT" }
+dependencies = [
+    "requests",
+    "transformers>=4.36.0",
+    "diffusers>=0.24.0",
+    "accelerate>=0.25.0",
+    "torch",
+    "torchaudio",
+    "huggingface-hub",
+    "einops",
+    "omegaconf",
+    "safetensors",
+    "scipy",
+    "opencv-python",
+    "soundfile",
+    "pydub",
+	"librosa",
+    "pedalboard",
+	"demucs"
+]
+readme = "README.md"
+authors = [
+    { name = "Internode", email = "pkeffect@gmail.com" }
+]
+keywords = ["comfyui", "audio", "analyze", "mixing", "dsp", "openwebui", "markdown", "vst plugins"]
+
+[project.urls]
+Repository = "https://github.com/pkeffect/ComfyUI-Internode"
+# Update the URL above to your actual Git repository URL
+
+[tool.comfy]
+PublisherId = "internode"
+DisplayName = "ComfyUI-Internode"
+Icon = ""

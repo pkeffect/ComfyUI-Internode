@@ -1,0 +1,74 @@
+{
+  "name": "ComfyUI-Internode",
+  "id": "comfyui-internode",
+  "author": "pkeffect",
+  "description": "A powerful node pack containing Audio Mixers (DSP), ACE-Step Music Generation, OpenWebUI Integration, and Markdown utilities.",
+  "version": "2.9.0",
+  "nodes": [
+    {
+      "name": "InternodeAceStepLoader",
+      "display_name": "ACE-Step Loader (Internode)",
+      "category": "Internode/ACE-Step"
+    },
+    {
+      "name": "InternodeAceStepGenerator",
+      "display_name": "ACE-Step Generator (Internode)",
+      "category": "Internode/ACE-Step"
+    },
+    {
+      "name": "InternodeAceStepCacheClear",
+      "display_name": "ACE-Step Clear Cache (Internode)",
+      "category": "Internode/ACE-Step"
+    },
+    {
+      "name": "InternodeAudioMixer",
+      "display_name": "Audio Mixer 4-Ch + EQ (Internode)",
+      "category": "Internode/AudioFX"
+    },
+    {
+      "name": "InternodeAudioMixer8",
+      "display_name": "Audio Mixer 8-Ch + EQ (Internode)",
+      "category": "Internode/AudioFX"
+    },
+    {
+      "name": "InternodeAudioLoader",
+      "display_name": "Audio Loader (Internode)",
+      "category": "Internode/Loaders"
+    },
+    {
+      "name": "InternodeVideoLoader",
+      "display_name": "Video Loader (Internode)",
+      "category": "Internode/Loaders"
+    },
+    {
+      "name": "InternodeImageLoader",
+      "display_name": "Image Loader (Internode)",
+      "category": "Internode/Loaders"
+    },
+    {
+      "name": "InternodeAudioSaver",
+      "display_name": "Audio Saver (Internode)",
+      "category": "Internode/AudioFX"
+    },
+    {
+      "name": "InternodeMarkdownNote",
+      "display_name": "Markdown Note (Internode)",
+      "category": "Internode/Utils"
+    },
+    {
+      "name": "Internode_OpenWebUIServerConfig",
+      "display_name": "OpenWebUI Server Config (Internode)",
+      "category": "Internode/OpenWebUI"
+    },
+    {
+      "name": "Internode_OpenWebUINode",
+      "display_name": "OpenWebUI Unified (Internode)",
+      "category": "Internode/OpenWebUI"
+    },
+    {
+      "name": "Internode_OpenWebUIRefreshModels",
+      "display_name": "OpenWebUI Refresh Models (Internode)",
+      "category": "Internode/OpenWebUI"
+    }
+  ]
+}

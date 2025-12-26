@@ -1,0 +1,19 @@
+# ComfyUI/custom_nodes/ComfyUI-Internode/requirements.txt
+# VERSION: 3.0.0
+
+requests
+transformers>=4.36.0
+diffusers>=0.24.0
+accelerate>=0.25.0
+torch
+torchaudio
+huggingface-hub
+einops
+omegaconf
+safetensors
+scipy
+opencv-python
+soundfile
+pydub
+pedalboard
+demucs
