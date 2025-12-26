@@ -1,5 +1,5 @@
 # ComfyUI/custom_nodes/ComfyUI-Internode/__init__.py
-# VERSION: 3.0.0
+# VERSION: 3.0.5
 
 import importlib.util
 import importlib.metadata
@@ -8,7 +8,7 @@ import sys
 import subprocess
 import re
 
-print("#### Internode: Initializing Node Pack VERSION 3.0.0...")
+print("#### Internode: Initializing Node Pack VERSION 3.0.5...")
 
 # --- Dependency Management ---
 
@@ -20,7 +20,6 @@ def normalize_package_name(name):
 
 def is_installed(package):
     # Mapping for packages where pip name != import name or special handling needed
-    # (Though importlib.metadata checks the PIP name, not the import name)
     try:
         importlib.metadata.distribution(package)
         return True
@@ -45,7 +44,6 @@ def ensure_dependencies():
                 continue
             
             # Extract package name (handles "package>=1.0", "package==2.0", etc.)
-            # Split by comparison operators
             pkg_name = re.split(r'[<>=!]', line)[0].strip()
             
             if normalize_package_name(pkg_name) in EXCLUDES:
@@ -81,14 +79,15 @@ ensure_dependencies()
 NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}
 
+# 1. OpenWebUI
 try:
-    # Now that dependencies are checked, these imports should succeed
     from .openwebui_nodes import NODE_CLASS_MAPPINGS as OWUI, NODE_DISPLAY_NAME_MAPPINGS as OWUI_N
     NODE_CLASS_MAPPINGS.update(OWUI)
     NODE_DISPLAY_NAME_MAPPINGS.update(OWUI_N)
 except Exception as e:
     print(f"#### Internode Error (OpenWebUI): {e}")
 
+# 2. ACE-Step Music
 try:
     from .acestep_nodes import NODE_CLASS_MAPPINGS as ACE, NODE_DISPLAY_NAME_MAPPINGS as ACE_N
     NODE_CLASS_MAPPINGS.update(ACE)
@@ -96,6 +95,7 @@ try:
 except Exception as e:
     print(f"#### Internode Error (ACE-Step): {e}")
 
+# 3. Utilities (Markdown)
 try:
     from .markdown_node import InternodeMarkdownNote
     NODE_CLASS_MAPPINGS["InternodeMarkdownNote"] = InternodeMarkdownNote
@@ -103,20 +103,54 @@ try:
 except Exception as e:
     print(f"#### Internode Error (Markdown): {e}")
 
+# 4. Analysis & Reactivity & Spectral
 try:
-    from .analysis_nodes import InternodeAudioAnalyzer
+    from .analysis_nodes import (
+        InternodeAudioAnalyzer, 
+        InternodeAudioToKeyframes,
+        InternodeSpectrogram,
+        InternodeImageToAudio
+    )
     NODE_CLASS_MAPPINGS["InternodeAudioAnalyzer"] = InternodeAudioAnalyzer
+    NODE_CLASS_MAPPINGS["InternodeAudioToKeyframes"] = InternodeAudioToKeyframes
+    NODE_CLASS_MAPPINGS["InternodeSpectrogram"] = InternodeSpectrogram
+    NODE_CLASS_MAPPINGS["InternodeImageToAudio"] = InternodeImageToAudio
+    
     NODE_DISPLAY_NAME_MAPPINGS["InternodeAudioAnalyzer"] = "Audio Analyzer (Curves)"
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeAudioToKeyframes"] = "Audio to Keyframes (React)"
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeSpectrogram"] = "Audio to Spectrogram (Image)"
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeImageToAudio"] = "Spectrogram to Audio (Reconstruct)"
 except Exception as e:
     print(f"#### Internode Error (Analysis): {e}")
+    import traceback
+    traceback.print_exc()
 
+# 5. VST3 Host (Refactored)
 try:
-    from .vst_nodes import InternodeVSTLoader
-    NODE_CLASS_MAPPINGS["InternodeVSTLoader"] = InternodeVSTLoader
-    NODE_DISPLAY_NAME_MAPPINGS["InternodeVSTLoader"] = "VST3 Plugin Host"
+    from .vst_nodes import (
+        InternodeVST3Effect, 
+        InternodeVST3Instrument, 
+        InternodeMidiLoader, 
+        InternodeVST3Param, 
+        InternodeVST3Info
+    )
+    NODE_CLASS_MAPPINGS["InternodeVST3Effect"] = InternodeVST3Effect
+    NODE_CLASS_MAPPINGS["InternodeVST3Instrument"] = InternodeVST3Instrument
+    NODE_CLASS_MAPPINGS["InternodeMidiLoader"] = InternodeMidiLoader
+    NODE_CLASS_MAPPINGS["InternodeVST3Param"] = InternodeVST3Param
+    NODE_CLASS_MAPPINGS["InternodeVST3Info"] = InternodeVST3Info
+    
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeVST3Effect"] = "VST3 Effect Processor (Internode)"
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeVST3Instrument"] = "VST3 Instrument (MIDI) (Internode)"
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeMidiLoader"] = "MIDI Loader (Internode)"
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeVST3Param"] = "VST3 Parameter Automation (Internode)"
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeVST3Info"] = "VST3 Info & Param List (Internode)"
 except Exception as e:
-    print(f"#### Internode Error (VST): {e}")
+    print(f"#### Internode Error (VST/MIDI): {e}")
+    import traceback
+    traceback.print_exc()
 
+# 6. Audio Tools (Demucs/Sidechain)
 try:
     from .audio_tools_nodes import InternodeSidechain, InternodeStemSplitter
     NODE_CLASS_MAPPINGS["InternodeSidechain"] = InternodeSidechain
@@ -127,6 +161,7 @@ try:
 except Exception as e:
     print(f"#### Internode Error (Tools): {e}")
 
+# 7. DSP & Media (Mixer/Loaders)
 try:
     from .dsp_nodes import (
         InternodeAudioMixer, InternodeAudioMixer8,

@@ -2,124 +2,298 @@
 
 ![Internode ComfyUI Custom Nodes](./images/screenshot.png)
 
-**Version:** 3.0.2  
-**Author:** pkeffect
+**Version:** 3.0.5  
+**Author:** pkeffect  
+**License:** MIT  
 
-A professional audio/multimodal suite for ComfyUI. Internode bridges the gap between Digital Audio Workstations (DAW) and Generative AI, providing high-fidelity DSP mixing, VST3 hosting, ACE-Step music generation, and advanced LLM integration via OpenWebUI.
+**ComfyUI-Internode** is a professional-grade Audio/Multimodal suite designed to bridge the gap between traditional Digital Audio Workstations (DAW) and Generative AI workflows. It provides high-fidelity DSP mixing, VST3 hosting, native AI music generation (ACE-Step), advanced LLM integration via OpenWebUI, and cutting-edge audio-reactive visualization tools.
 
----
-
-## 📦 Installation
-
-1.  **Clone the repository** into your `ComfyUI/custom_nodes/` folder:
-    ```bash
-    cd ComfyUI/custom_nodes/
-    git clone https://github.com/pkeffect/ComfyUI-Internode.git
-    ```
-
-2.  **Install Dependencies**:
-    *   **Windows/Linux/Mac**: Run the included install script.
-        ```bash
-        cd ComfyUI-Internode
-        ..\..\python_embeded\python.exe install.py  # Standalone Windows
-        # OR
-        python install.py                           # Standard Python env
-        ```
-
-3.  **System Requirements**:
-    *   **FFmpeg**: Required for loading MP3, FLAC, OGG, and video files. Ensure `ffmpeg` is in your system PATH.
-    *   **VST3 Support**: To use the VST loader, you must have VST3 plugins installed in standard system locations (e.g., `C:\Program Files\Common Files\VST3`).
+This suite is engineered for power users who require precise control over audio signal chains, creating a complete "Studio inside ComfyUI."
 
 ---
 
-## 🎛️ Audio Mixer (DSP)
+## 📦 Installation & Requirements
 
-A fully functional 4-channel or 8-channel mixer with a custom UI.
+### 1. Installation
+Clone the repository into your `ComfyUI/custom_nodes/` directory:
 
-*   **Dual Engine Architecture**:
-    *   **UI (Frontend)**: Uses Web Audio API for fast, real-time previewing inside the browser.
-    *   **Render (Backend)**: Uses PyTorch/Torchaudio for bit-perfect, GPU-accelerated rendering.
-    *   *Note: Minor dynamic differences may exist between the browser preview and the final node output.*
-*   **Channel Strip Features**:
-    *   **3-Band EQ**: Professional Shelving (Low/High) and Peaking (Mid) filters.
-    *   **Dynamics**: One-knob Gate and Compressor per channel.
-    *   **Delay**: Send-based delay with Time, Feedback, and Stereo Echo controls.
-    *   **Pan/Vol**: Standard stereo panning and faders.
-*   **Master Bus**:
-    *   **Master FX**: Drive (Saturation), Low-Cut/High-Cut filters, Ceiling (Limiter).
-    *   **Stereo Width**: M/S processing to widen or narrow the mix.
-*   **Outputs**:
-    *   `master_output`: The final mix with all Master FX applied.
-    *   `pre_master_output`: The sum of all channels *before* the Master FX chain (useful for external mastering).
+```bash
+cd ComfyUI/custom_nodes/
+git clone https://github.com/pkeffect/ComfyUI-Internode.git
+```
 
----
+### 2. Dependency Management
+Internode requires specific Python libraries (Pedalboard, Torchaudio, Diffusers, Mido, etc.). We provide a dedicated installer script to ensure these are installed into the correct environment.
 
-## 🎹 ACE-Step (AI Music Generation)
+**Windows (Standalone ComfyUI):**
+```cmd
+cd ComfyUI-Internode
+..\..\python_embeded\python.exe install.py
+```
 
-Native implementation of the ACE-Step diffusion model for high-quality audio generation.
+**Linux / Mac / Standard Python:**
+```bash
+cd ComfyUI-Internode
+python install.py
+```
 
-*   **Nodes**:
-    *   `ACE-Step Loader`: Loads the model with caching support to prevent reloading on every run.
-    *   `ACE-Step Generator`: The main generation node.
-*   **Features**:
-    *   **Preview Mode**: Toggle to limit generation to 10s @ 20 steps for rapid prompt testing.
-    *   **LoRA Support**: Dynamically load/unload LoRAs (e.g., Chinese Rap LoRA).
-    *   **Lyrics & Guidance**: Full support for lyrical prompting and CFG scales.
+### 3. System Prerequisites
+*   **FFmpeg (Critical):** Required for loading MP3, FLAC, OGG, AAC, and video files. Without FFmpeg, only WAV files will load.
+    *   *Windows:* Download build, extract, and add the `bin` folder to your System PATH.
+    *   *Linux:* `sudo apt install ffmpeg`
+    *   *Mac:* `brew install ffmpeg`
+*   **VST3 Plugins (Optional):** To use the VST Host nodes, you must have 64-bit `.vst3` plugins installed in your system's standard VST3 folder (e.g., `C:\Program Files\Common Files\VST3`).
 
 ---
 
-## 🔌 VST3 Host (Audio FX)
+## 🎛️ Section 1: The Mixer & DSP Engine
 
-Apply your favorite third-party VST3 plugins to audio tensors within ComfyUI.
+The core of Internode is its audio processing engine. Unlike simple audio playback nodes, Internode uses a **Dual-Engine Architecture**:
+1.  **Frontend (UI):** Uses the browser's Web Audio API for real-time, zero-latency previewing while you tweak knobs.
+2.  **Backend (Render):** Uses **PyTorch/Torchaudio** for bit-perfect, offline rendering when the queue is executed.
 
-*   **Node**: `InternodeVSTLoader`
-*   **Inputs**:
-    *   `audio`: The audio stream to process.
-    *   `vst_path`: Absolute path to the `.vst3` file (e.g., `C:\Program Files\Common Files\VST3\FabFilter Pro-Q 3.vst3`).
-    *   `dry_wet`: Blend control (0.0 = Dry, 1.0 = Wet).
-*   **Performance Warning**: This node processes audio on the **CPU** (using `pedalboard`). It will transfer data from GPU -> CPU -> VST -> GPU, which may impact performance during batch processing.
+### 🎚️ Audio Mixer (4-Ch / 8-Ch)
+**Node Name:** `InternodeAudioMixer`, `InternodeAudioMixer8`
+
+A full-featured mixing console available in 4-channel or 8-channel variants.
+
+**How it Works:**
+The mixer processes audio tensors through a sophisticated signal chain: **Gain -> Gate -> EQ -> Delay -> Panning -> Fader -> Master Bus**.
+*   **EQ Algorithm:** Uses a Serial Biquad Topology (Shelving for Low/High, Peaking for Mid). This prevents phase cancellation artifacts common in subtractive isolator EQs.
+*   **Dynamics:** Features a hard-knee Gate and a VCA-style Compressor.
+*   **Delay:** A send-based delay line with feedback and stereo echo simulation.
+
+**Controls:**
+*   **Channel Strip:**
+    *   **Time/Fdbk/Mix/Echo:** Controls for the delay effect.
+    *   **Gate/Comp:** Dynamics processing.
+    *   **High/Mid/Low:** 3-Band EQ (boost/cut).
+    *   **Pan:** Stereo positioning.
+    *   **Vol:** Channel volume fader.
+    *   **M/S:** Mute and Solo buttons.
+*   **Master Bus:**
+    *   **Drive:** Tube-style saturation/distortion.
+    *   **LoCut/HiCut:** High-pass and Low-pass filters for cleaning up the final mix.
+    *   **Ceil:** Brickwall limiter to prevent clipping.
+    *   **Width:** Mid-Side (M/S) processor to widen or collapse the stereo image.
+    *   **Mn (Mono):** Forces output to mono (useful for checking phase compatibility).
+
+**Outputs:**
+*   `master_output`: The final audio with all Master Bus effects (Drive, Limiter, EQ) applied.
+*   `pre_master_output`: The summed mix of all channels *before* hitting the Master Bus. Useful if you want to perform mastering in a separate VST node.
+
+**Usage Scenario:**
+You have a generated music track (Channel 1) and a voiceover generated by a TTS node (Channel 2). You use the EQ to cut the low-end mud from the voice, use the Compressor to even out the levels, and apply a slight Delay to the music to give it space.
+
+### 📥 Media Loaders
+**Nodes:** `InternodeAudioLoader`, `InternodeVideoLoader`, `InternodeImageLoader`
+
+Robust file loaders with drag-and-drop support.
+
+*   **Audio Loader:** Loads audio files. Supports resampling and Mono-to-Stereo conversion.
+*   **Video Loader:** Extracts frames and audio from video.
+    *   *Important:* Includes a `frame_load_cap` setting. Loading a 2-hour 4K movie into RAM will crash ComfyUI. Use this cap to load small chunks (e.g., 150 frames) for processing.
+    *   *Resize Mode:* Can downscale video on load to save VRAM.
+*   **Image Loader:** Loads images with alpha channel support. Can invert the alpha mask on load.
+
+### 💾 Audio Saver
+**Node Name:** `InternodeAudioSaver`
+
+Exports audio tensors to disk.
+
+**Supported Formats:**
+*   **WAV:** 16-bit (CD Quality), 24-bit (Studio), 32-bit Float (High Dynamic Range).
+*   **FLAC:** Lossless compression.
+*   **MP3/OGG/AAC:** Lossy compression for web delivery.
 
 ---
 
-## 🤖 OpenWebUI (LLM Integration)
+## 🎹 Section 2: VST3 Integration (The Studio)
 
-A unified interface for connecting to local or remote OpenWebUI instances (e.g., Ollama, LocalAI).
+Turn ComfyUI into a DAW host. These nodes rely on the `pedalboard` library to load standard VST3 plugins.
+*Note: VST processing happens on the CPU. Data must move GPU -> CPU -> VST -> GPU, which may be a bottleneck in large batches.*
 
-*   **Features**:
-    *   **Context Aware**: Correctly parses and appends conversation history, allowing for multi-turn chatbots.
-    *   **Multimodal**: Supports Image, Video, and Audio inputs (sent as Base64 data URIs).
-    *   **Model Caching**: Caches the list of available models from the API to prevent excessive network calls.
-*   **Nodes**:
-    *   `OpenWebUI Server Config`: Set your Host URL and API Key.
-    *   `OpenWebUI Unified`: The main chat node. Accepts prompt + history + media.
-    *   `OpenWebUI Refresh Models`: Force-refreshes the model list from the server.
+### 🎹 VST3 Instrument
+**Node Name:** `InternodeVST3Instrument`
+
+Loads a virtual instrument (Synthesizer, Sampler) and plays it using a MIDI file.
+
+**Inputs:**
+*   `midi_data`: A MIDI object loaded via `InternodeMidiLoader`.
+*   `vst_path`: Path to your `.vst3` instrument file (e.g., *Serum.vst3*, *Vital.vst3*).
+*   `param_x`: Optional automation inputs.
+
+**Scenario:**
+You want to generate a specific melody using a high-quality synthesizer like Serum, rather than relying on AI generation. You load a `.mid` file containing the chords, point the node to Serum, and it renders the audio wav file.
+
+### 🎛️ VST3 Effect
+**Node Name:** `InternodeVST3Effect`
+
+Applies an audio effect plugin (Reverb, Distortion, Mastering Suite) to an audio stream.
+
+**Inputs:**
+*   `audio`: The input audio tensor.
+*   `vst_path`: Path to your `.vst3` effect file (e.g., *FabFilter Pro-Q3.vst3*).
+*   `dry_wet`: Controls the blend of the effect.
+
+**Scenario:**
+You have an AI-generated voice that sounds "dry" and robotic. You chain this node with a high-quality VST Reverb plugin (like Valhalla) to place the voice in a realistic acoustic space.
+
+### 🎚️ VST3 Parameter Automation
+**Node Name:** `InternodeVST3Param`
+
+Allows you to automate knobs inside the VST plugin.
+
+**How to Use:**
+1.  Use the `InternodeVST3Info` node to list the parameters of your plugin.
+2.  Copy the exact parameter name (e.g., "Cutoff Frequency").
+3.  Paste it into the `param_name` field of this node.
+4.  Connect this node to `param_1` on the Instrument or Effect node.
+
+**Scenario:**
+You want the filter cutoff of your synthesizer to open up slowly over time. You connect a Float curve to the `value` input of this node, effectively automating the synth via ComfyUI logic.
 
 ---
 
-## 🛠️ Utilities
+## 🎼 Section 3: AI Music Generation (ACE-Step)
 
-*   **Markdown Note**: A secure, sanitizing Markdown editor for adding documentation directly into your workflows. Supports code blocks, tables, and basic formatting.
-*   **Loaders**:
-    *   `Audio Loader`: Supports WAV, MP3, FLAC, etc. (Requires FFmpeg).
-    *   `Video Loader`: Extracts frames and audio from video files. Includes frame capping to prevent OOM errors.
-    *   `Image Loader`: Supports RGBA/Mask inversion.
-*   **Savers**:
-    *   `Audio Saver`: Supports exporting to WAV (16/24/32-float), FLAC, MP3, OGG, AAC.
+Native implementation of the **ACE-Step** diffusion model for audio.
+
+### ⚡ ACE-Step Generator
+**Node Name:** `InternodeAceStepGenerator`
+
+Generates high-fidelity music based on text prompts and lyrics.
+
+**Key Features:**
+*   **Preview Mode:** A toggle that overrides settings to 10 seconds / 20 steps. Crucial for quickly iterating on prompts without waiting for full renders.
+*   **Lyrics:** Accepts standard text for lyrical generation.
+*   **LoRA Support:** Can load fine-tuned LoRA models (e.g., Chinese Rap, EDM styles) to steer generation.
+*   **Guidance:** Full control over CFG (Classifier Free Guidance) scales for text and lyrics independently.
+
+**Scenario:**
+You are generating a video of a cyberpunk city. You prompt this node with *"Cyberpunk, Synthwave, 120 BPM, Dark, Industrial"* to generate a 30-second unique backing track that fits the mood perfectly.
 
 ---
 
-## ⚠️ Troubleshooting
+## 📊 Section 4: Audio Reactivity & Analysis
 
-**1. "Missing dependencies" error:**
-Run `install.py` found in the root of the custom node folder.
+Create videos that react to sound.
 
-**2. Audio files (MP3/AAC) fail to load:**
-Internode falls back to standard Python libraries if FFmpeg is not found. Install FFmpeg and add it to your system PATH to enable broad format support.
+### 📈 Audio to Keyframes
+**Node Name:** `InternodeAudioToKeyframes`
 
-**3. VSTs not loading:**
-*   Ensure the path points to a `.vst3` file, not a `.dll` (VST2 is not supported).
-*   Ensure the plugin is 64-bit.
-*   Check the console log for specific `pedalboard` errors.
+Analyzes audio and converts it into control signals for animation.
 
-**4. Mixer UI doesn't match the output sound exactly:**
-The browser uses Web Audio API for the UI preview, while the node uses PyTorch for the final render. Minor differences in compressor attack/release curves and filter Q-factors are expected. Trust the `Audio Saver` output for critical work.
+**Modes:**
+*   **RMS (Volume):** Reacts to overall loudness.
+*   **Low/Mid/High:** Reacts to specific frequency bands (Kick, Vocals, Hats).
+*   **Beat (Trigger):** Outputs a binary `1.0` or `0.0` based on transient detection.
+
+**Outputs:**
+*   `float_curve`: A list of floats for batch processing.
+*   `schedule_str`: A formatted string (e.g., `0:(0.0), 1:(0.5)`) compatible with **ComfyUI-Advanced-ControlNet** and **AnimateDiff-Evolved**.
+*   `curve_image`: A visual graph of the reaction curve for debugging.
+
+**Scenario:**
+You want the camera zoom in your AnimateDiff video to pulse with the kick drum. You select "Low (Bass/Kick)" mode, generate the schedule string, and plug it into the "Motion Scale" widget of AnimateDiff.
+
+### 🌈 Spectrogram & Audio Inpainting
+**Nodes:** `InternodeSpectrogram`, `InternodeImageToAudio`
+
+This pair of nodes unlocks **Audio Inpainting**.
+
+1.  **Spectrogram:** Converts audio into a visual image (Log-Magnitude Spectrogram). Time is on the X-axis, Frequency on the Y-axis.
+2.  **ImageToAudio:** Converts an image back into audio using the Griffin-Lim algorithm to reconstruct phase.
+
+**Scenario (The "AI Touch"):**
+You have a recording with a car horn honking in the background.
+1.  Convert Audio -> Spectrogram (Image).
+2.  Send the Image to the KSampler. Use the "Inpaint" standard workflow.
+3.  Mask the visual "blob" that represents the car horn.
+4.  Use Stable Diffusion to "fill" the mask (inpainting the background noise).
+5.  Convert the Inpainted Image -> Audio.
+The car horn is now gone, replaced by synthesized background ambience.
+
+---
+
+## 💬 Section 5: OpenWebUI (LLM)
+
+Integrate your local LLMs (Ollama, LocalAI) directly into ComfyUI for prompt enhancement, roleplay, or multimodal analysis.
+
+### 🤖 OpenWebUI Unified
+**Node Name:** `Internode_OpenWebUINode`
+
+A chat node that supports memory (Context) and Multimodal inputs.
+
+**Features:**
+*   **History:** Connect the `history` output back to the `history` input (via a feedback loop or primitive) to maintain a conversation.
+*   **Multimodal:** Accepts Images, Audio, and Video inputs. It automatically converts them to Base64 Data URIs and sends them to the vision-capable LLM (e.g., LLaVA, GPT-4-Vision).
+
+**Scenario:**
+You upload a picture of a landscape. You send it to this node with the prompt *"Describe this image in poetic detail."* The LLM analyzes the image and returns a text description, which you then pipe into a CLIP Text Encode node to generate a variation of that image.
+
+---
+
+## 🛠️ Section 6: Utilities & Tools
+
+### 📝 Markdown Note
+**Node Name:** `InternodeMarkdownNote`
+
+A secure, HTML-sanitized Markdown editor for your workflow.
+*   **Why use it?** Standard ComfyUI notes are limited. This node supports headers, bold/italic, lists, tables, and code blocks.
+*   **Security:** It strips dangerous Javascript (`<script>`, `onclick`) to ensure shared workflows are safe.
+
+### ✂️ Stem Splitter
+**Node Name:** `InternodeStemSplitter`
+
+Uses the **Demucs** AI model to split a mixed song into 4 separate tracks:
+1.  Drums
+2.  Bass
+3.  Vocals
+4.  Other (Melody/FX)
+
+**Scenario:**
+You want to remix a song. You split the stems, keep only the Vocals, and use the ACE-Step generator to create a completely new backing track around those vocals.
+
+### 📉 Sidechain (Ducker)
+**Node Name:** `InternodeSidechain`
+
+Automatically lowers the volume of one audio stream (Music) when another stream (Voice) is active.
+*   **Controls:** Threshold, Ratio, Attack, Release.
+
+**Scenario:**
+Creating a podcast intro. The music starts loud. As soon as the voiceover begins, the Sidechain node automatically "ducks" the music volume down so the voice is clear, then raises it back up when the voice stops.
+
+---
+
+## ⚠️ Troubleshooting Guide
+
+**1. "ModuleNotFoundError" or Missing Nodes:**
+You likely skipped the dependency installation.
+*   Go to `ComfyUI/custom_nodes/ComfyUI-Internode`.
+*   Run `python install.py`.
+*   Restart ComfyUI.
+
+**2. VST Plugins not loading:**
+*   Internode **only** supports `.vst3` files. `.dll` (VST2) files are not supported.
+*   Plugins must be **64-bit**.
+*   Ensure the path is correct. Copy the path directly from Windows Explorer (Shift+Right Click -> Copy as Path) and remove the quotes.
+
+**3. "Pedalboard not installed" error:**
+Some Linux distros have trouble building the audio backend wheels. Ensure you have `build-essential` and `libsndfile1-dev` installed via apt, then re-run `install.py`.
+
+**4. OOM (Out of Memory) when loading Video:**
+Video frames are uncompressed raw tensors in VRAM/RAM.
+*   Use the `frame_load_cap` on the Video Loader (e.g., set to 150).
+*   Use the `resize_mode` to downscale 4K video to 512p or 768p upon loading.
+
+**5. Audio Reactivity Graph is flat:**
+*   Check your `amp_scale`. If the audio is quiet, the normalized curve might look flat.
+*   Check your `mode`. If you select "Low" but the track has no bass, the curve will be flat.
+
+---
+
+**Credits:**
+*   *Pedalboard* by Spotify for VST hosting.
+*   *Diffusers* by HuggingFace for ACE-Step implementation.
+*   *Torchaudio* for DSP backend.
