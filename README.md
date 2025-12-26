@@ -1,5 +1,7 @@
 # ComfyUI-Internode
 
+![open Chess](./images/screenshot.png)
+
 **Version 3.0.0**  
 A comprehensive "Kitchen Sink" suite for **ComfyUI** focusing on Audio DSP, Music Generation (ACE-Step), OpenWebUI Agents, and Workflow Utilities.
 
