@@ -1,9 +1,9 @@
 // ComfyUI/custom_nodes/ComfyUI-Internode/js/internode_markdown.js
-// VERSION: 3.0.1
+// VERSION: 3.0.7
 
 import { app } from "../../scripts/app.js";
 
-console.log("%c#### Internode: Markdown UI v3.0.1 Loaded", "color: green; font-weight: bold;");
+console.log("%c#### Internode: Markdown UI v3.0.7 Loaded (Save Fix)", "color: green; font-weight: bold;");
 
 // --- CUSTOM SANITIZER ---
 function escapeHtml(unsafe) {
@@ -17,8 +17,6 @@ function escapeHtml(unsafe) {
 }
 
 function isValidUrl(url) {
-    // Allow http, https, relative paths, anchors, and ComfyUI specific paths
-    // Block javascript: and data: (unless image)
     url = url.trim();
     if (url.toLowerCase().startsWith("javascript:")) return false;
     return true;
@@ -47,7 +45,6 @@ function parseMarkdown(text) {
             continue;
         }
         if (inCodeBlock) {
-            // Securely escape code block content
             html += escapeHtml(line) + '\n';
             continue;
         }
@@ -61,7 +58,6 @@ function parseMarkdown(text) {
             tableRows.push(line);
             continue;
         } else if (inTable) {
-            // End of table, render it
             html += renderTable(tableRows);
             inTable = false;
             tableRows = [];
@@ -79,7 +75,6 @@ function parseMarkdown(text) {
             const content = line.slice(level).trim();
             const size = 1.6 - (level * 0.1); 
             const border = level <= 2 ? 'border-bottom:1px solid #30363d; padding-bottom:0.3em;' : '';
-            // processInline now escapes content
             html += `<h${level} style="margin:20px 0 10px 0; font-size:${size}em; font-weight:600; color:#e6edf3; ${border}">${processInline(content)}</h${level}>`;
             continue;
         }
@@ -133,7 +128,6 @@ function parseMarkdown(text) {
         }
     }
 
-    // Handle table at end of input
     if (inTable && tableRows.length > 0) {
         html += renderTable(tableRows);
     }
@@ -142,14 +136,12 @@ function parseMarkdown(text) {
 }
 
 function renderTable(rows) {
-    if (rows.length < 2) return ''; // Need at least header + separator
+    if (rows.length < 2) return ''; 
     
     let html = '<table style="border-collapse:collapse; margin:16px 0; width:100%;">';
     
     for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
-        
-        // Skip separator row (contains only dashes and pipes)
         if (row.match(/^\|[\s\-:|]+\|$/)) continue;
         
         const cells = row.split('|').filter((cell, idx, arr) => idx > 0 && idx < arr.length - 1);
@@ -170,45 +162,25 @@ function renderTable(rows) {
 }
 
 function processInline(text) {
-    // 1. ESCAPE EVERYTHING FIRST
-    // This effectively neutralizes all HTML injection attacks (XSS).
     text = escapeHtml(text);
 
-    // 2. APPLY MARKDOWN TRANSFORMS
-    // Since input is escaped, we are processing &lt;b&gt; as literal text, which is correct.
-    // The regex matches below will match the SAFE characters.
-
-    // Images: ![alt](url)
-    // Note: The capture groups $1 and $2 now contain escaped chars.
-    // We must validate the URL to prevent "javascript:" attacks.
     text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, url) => {
-        if (!isValidUrl(url)) return ""; // Block bad URLs
-        // Since 'alt' and 'url' are already escaped, they are safe to put in attributes
+        if (!isValidUrl(url)) return ""; 
         return `<img src="${url}" alt="${alt}" style="max-width:100%;">`;
     });
     
-    // Links: [text](url)
     text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label, url) => {
-        if (!isValidUrl(url)) return label; // Return text only if URL bad
+        if (!isValidUrl(url)) return label; 
         return `<a href="${url}" target="_blank" style="color:#58a6ff; text-decoration:none;">${label}</a>`;
     });
     
-    // Bold + Italic combined (***text*** or ___text___)
     text = text.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong style="color:#e6edf3;"><em>$1</em></strong>');
     text = text.replace(/___([^_]+)___/g, '<strong style="color:#e6edf3;"><em>$1</em></strong>');
-    
-    // Bold (**text** or __text__)
     text = text.replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#e6edf3;">$1</strong>');
     text = text.replace(/__([^_]+)__/g, '<strong style="color:#e6edf3;">$1</strong>');
-    
-    // Italic (*text* or _text_) - Negative lookbehind/ahead checks used to avoid word-internal matches
     text = text.replace(/(?<![a-zA-Z0-9])\*([^*]+)\*(?![a-zA-Z0-9])/g, '<em style="color:#e6edf3;">$1</em>');
     text = text.replace(/(?<![a-zA-Z0-9])_([^_]+)_(?![a-zA-Z0-9])/g, '<em style="color:#e6edf3;">$1</em>');
-    
-    // Strikethrough (~~text~~)
     text = text.replace(/~~([^~]+)~~/g, '<del style="color:#8b949e;">$1</del>');
-    
-    // Inline code (`code`)
     text = text.replace(/`([^`]+)`/g, '<code style="background:rgba(110,118,129,0.4); padding:2px 5px; border-radius:4px; font-family:monospace;">$1</code>');
     
     return text;
@@ -218,17 +190,28 @@ app.registerExtension({
     name: "Internode.MarkdownNode",
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
         if (nodeData.name === "InternodeMarkdownNote") {
+            
+            // --- FIX: Restore Persistence via onConfigure ---
+            const onConfigure = nodeType.prototype.onConfigure;
+            nodeType.prototype.onConfigure = function() {
+                if (onConfigure) onConfigure.apply(this, arguments);
+                
+                const textWidget = this.widgets?.find(w => w.name === "text");
+                if (textWidget && this.markdown_textarea) {
+                    // Force the widget value (loaded from JSON) into the UI
+                    this.markdown_textarea.value = textWidget.value;
+                    // Force an update of the preview if needed
+                    if (this.updateMarkdownState) this.updateMarkdownState();
+                }
+            };
+
             const onNodeCreated = nodeType.prototype.onNodeCreated;
             
             nodeType.prototype.onNodeCreated = function () {
                 const r = onNodeCreated ? onNodeCreated.apply(this, arguments) : undefined;
 
-                // 1. Locate and Handle Default Widget
                 const textWidget = this.widgets.find(w => w.name === "text");
                 if (textWidget) {
-                    // FIX: Do NOT set type to "custom". 
-                    // This allows ComfyUI to serialize the widget value automatically.
-                    // We simply hide it by setting size to 0 and empty draw function.
                     textWidget.computeSize = () => [0, 0];
                     textWidget.draw = function() { return; }; 
                 }
@@ -286,7 +269,7 @@ app.registerExtension({
                 toolbar.appendChild(label);
                 toolbar.appendChild(toggleBtn);
 
-                // 4. Content Area (Holds Editor and Preview)
+                // 4. Content Area
                 const contentArea = document.createElement("div");
                 Object.assign(contentArea.style, {
                     width: "100%",
@@ -299,6 +282,10 @@ app.registerExtension({
 
                 // 5. Textarea (Edit Mode)
                 const textarea = document.createElement("textarea");
+                
+                // --- BINDING: Save reference for onConfigure ---
+                this.markdown_textarea = textarea;
+
                 Object.assign(textarea.style, {
                     width: "100%",
                     height: "100%",
@@ -315,7 +302,7 @@ app.registerExtension({
                     display: "block" 
                 });
                 
-                // Populate from widget value if exists
+                // Initialize from widget if available (for new nodes created via menu)
                 if(textWidget) textarea.value = textWidget.value;
 
                 // 6. Preview Div (Preview Mode)
@@ -337,7 +324,6 @@ app.registerExtension({
 
                 const updateState = () => {
                     if (isPreview) {
-                        // Show Preview (Sanitized)
                         preview.innerHTML = parseMarkdown(textarea.value);
                         textarea.style.display = "none";
                         preview.style.display = "block";
@@ -346,7 +332,6 @@ app.registerExtension({
                         toggleBtn.style.backgroundColor = "#21262d"; 
                         toggleBtn.style.color = "#c9d1d9";
                     } else {
-                        // Show Edit
                         preview.style.display = "none";
                         textarea.style.display = "block";
                         
@@ -355,8 +340,11 @@ app.registerExtension({
                         toggleBtn.style.color = "#fff";
                     }
                 };
+                
+                // --- BINDING: Save update function ---
+                this.updateMarkdownState = updateState;
 
-                // Initialize in Edit Mode
+                // Initialize
                 updateState();
 
                 // Events
@@ -366,12 +354,11 @@ app.registerExtension({
                     updateState();
                 };
 
-                // Sync textarea input to the hidden widget so saving works
+                // Sync textarea input to the hidden widget
                 textarea.addEventListener("input", () => {
                     if(textWidget) textWidget.value = textarea.value;
                 });
 
-                // Stop events propagation for usability
                 const stopProp = (e) => e.stopPropagation();
                 textarea.addEventListener("mousedown", stopProp);
                 textarea.addEventListener("wheel", stopProp, {passive: true});
@@ -386,7 +373,6 @@ app.registerExtension({
 
                 this.addDOMWidget("markdown_ui", "div", container, { serialize: false });
 
-                // Default size
                 this.setSize([500, 700]);
                 
                 return r;

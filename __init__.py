@@ -1,5 +1,5 @@
 # ComfyUI/custom_nodes/ComfyUI-Internode/__init__.py
-# VERSION: 3.0.5
+# VERSION: 3.0.6
 
 import importlib.util
 import importlib.metadata
@@ -8,7 +8,7 @@ import sys
 import subprocess
 import re
 
-print("#### Internode: Initializing Node Pack VERSION 3.0.5...")
+print("#### Internode: Initializing Node Pack VERSION 3.0.6...")
 
 # --- Dependency Management ---
 
@@ -19,7 +19,6 @@ def normalize_package_name(name):
     return name.lower().replace("_", "-")
 
 def is_installed(package):
-    # Mapping for packages where pip name != import name or special handling needed
     try:
         importlib.metadata.distribution(package)
         return True
@@ -32,46 +31,29 @@ def ensure_dependencies():
         print(f"#### Internode: requirements.txt not found at {req_file}")
         return
 
-    # Packages to exclude from auto-install (let ComfyUI manage these)
     EXCLUDES = {"torch", "torchaudio", "torchvision", "comfyui"}
-    
     missing = []
     
     with open(req_file, 'r', encoding='utf-8') as f:
         for line in f:
             line = line.strip()
-            if not line or line.startswith('#'):
-                continue
-            
-            # Extract package name (handles "package>=1.0", "package==2.0", etc.)
+            if not line or line.startswith('#'): continue
             pkg_name = re.split(r'[<>=!]', line)[0].strip()
-            
-            if normalize_package_name(pkg_name) in EXCLUDES:
-                continue
-
-            if not is_installed(pkg_name):
-                missing.append(line)
+            if normalize_package_name(pkg_name) in EXCLUDES: continue
+            if not is_installed(pkg_name): missing.append(line)
 
     if missing:
         print(f"#### Internode: Found missing dependencies: {', '.join(missing)}")
         print("#### Internode: Installing missing packages... (This may take a moment)")
-        
         try:
-            # Construct pip install command
             cmd = [sys.executable, "-m", "pip", "install"] + missing
-            
-            # Run pip
             subprocess.check_call(cmd)
             print("#### Internode: Dependencies installed successfully.")
-            
-            # Force refresh of import mechanism for newly installed packages
             importlib.invalidate_caches()
-            
         except subprocess.CalledProcessError as e:
             print(f"#### Internode Error: Dependency installation failed. Please install manually from {req_file}")
             print(f"#### Error details: {e}")
 
-# Run the check immediately
 ensure_dependencies()
 
 # --- Node Imports ---
@@ -122,35 +104,36 @@ try:
     NODE_DISPLAY_NAME_MAPPINGS["InternodeImageToAudio"] = "Spectrogram to Audio (Reconstruct)"
 except Exception as e:
     print(f"#### Internode Error (Analysis): {e}")
-    import traceback
-    traceback.print_exc()
 
-# 5. VST3 Host (Refactored)
+# 5. VST3 Host
 try:
     from .vst_nodes import (
         InternodeVST3Effect, 
         InternodeVST3Instrument, 
         InternodeMidiLoader, 
         InternodeVST3Param, 
-        InternodeVST3Info
+        InternodeVST3Info,
+        InternodeVSTLoader # RESTORED
     )
     NODE_CLASS_MAPPINGS["InternodeVST3Effect"] = InternodeVST3Effect
     NODE_CLASS_MAPPINGS["InternodeVST3Instrument"] = InternodeVST3Instrument
     NODE_CLASS_MAPPINGS["InternodeMidiLoader"] = InternodeMidiLoader
     NODE_CLASS_MAPPINGS["InternodeVST3Param"] = InternodeVST3Param
     NODE_CLASS_MAPPINGS["InternodeVST3Info"] = InternodeVST3Info
+    NODE_CLASS_MAPPINGS["InternodeVSTLoader"] = InternodeVSTLoader # RESTORED
     
     NODE_DISPLAY_NAME_MAPPINGS["InternodeVST3Effect"] = "VST3 Effect Processor (Internode)"
     NODE_DISPLAY_NAME_MAPPINGS["InternodeVST3Instrument"] = "VST3 Instrument (MIDI) (Internode)"
     NODE_DISPLAY_NAME_MAPPINGS["InternodeMidiLoader"] = "MIDI Loader (Internode)"
     NODE_DISPLAY_NAME_MAPPINGS["InternodeVST3Param"] = "VST3 Parameter Automation (Internode)"
     NODE_DISPLAY_NAME_MAPPINGS["InternodeVST3Info"] = "VST3 Info & Param List (Internode)"
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeVSTLoader"] = "VST3 Loader (Legacy/Simple)" # RESTORED
 except Exception as e:
     print(f"#### Internode Error (VST/MIDI): {e}")
     import traceback
     traceback.print_exc()
 
-# 6. Audio Tools (Demucs/Sidechain)
+# 6. Audio Tools
 try:
     from .audio_tools_nodes import InternodeSidechain, InternodeStemSplitter
     NODE_CLASS_MAPPINGS["InternodeSidechain"] = InternodeSidechain
@@ -161,7 +144,7 @@ try:
 except Exception as e:
     print(f"#### Internode Error (Tools): {e}")
 
-# 7. DSP & Media (Mixer/Loaders)
+# 7. DSP & Media
 try:
     from .dsp_nodes import (
         InternodeAudioMixer, InternodeAudioMixer8,

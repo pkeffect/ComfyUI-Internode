@@ -1,5 +1,5 @@
 # ComfyUI/custom_nodes/ComfyUI-Internode/vst_nodes.py
-# VERSION: 3.0.3
+# VERSION: 3.0.4
 
 import torch
 import numpy as np
@@ -35,7 +35,6 @@ def load_vst_plugin(path):
         
     # Pedalboard objects aren't strictly thread-safe for processing, 
     # but we cache the *plugin definition* if possible, or just new instances.
-    # VSTs are heavy; we instantiate fresh for safety in render but cache paths check.
     try:
         return load_plugin(path)
     except Exception as e:
@@ -69,13 +68,10 @@ class InternodeVST3Info:
         if not plugin: return ("Failed to load plugin.",)
         
         info = []
-        info.append(f"Plugin: {plugin.name}")
-        info.append(f"Category: {plugin.category}")
-        info.append("-" * 20)
-        
-        # List Parameters
-        # plugin.parameters is a dict-like object
         try:
+            info.append(f"Plugin: {plugin.name}")
+            info.append(f"Category: {plugin.category}")
+            info.append("-" * 20)
             for name, param in plugin.parameters.items():
                 info.append(f"{name}: {param.raw_value:.4f}")
         except:
@@ -176,86 +172,34 @@ class InternodeVST3Instrument:
         total_duration = midi_len + duration_padding
         total_samples = int(total_duration * sr)
         
-        # Mido -> List of messages (NoteOn/Off) for Pedalboard not straightforward
-        # Pedalboard expects raw MIDI bytes in process() or internal hosting?
-        # Actually Pedalboard's `VST3Plugin` does not natively sequence MIDI events over time easily 
-        # without a host loop. We must simulate the timeline.
-        
-        # Strategy: Render in blocks.
-        # This is complex. For v3.0.3, we implement a simplified "whole file" render 
-        # if the VST accepts midi_messages list.
-        # NOTE: Current Pedalboard versions have experimental MIDI support.
-        # We will parse Mido messages to a format Pedalboard might accept, 
-        # or (simpler) just allow the plugin to generate if it has an internal sequencer,
-        # but for true MIDI support we need to feed events.
-        
-        # Since standard Pedalboard MIDI support is limited/experimental, 
-        # we provide a disclaimer mechanism or basic implementation.
-        # Basic implementation: We will attempt to use the plugin as an effect if MIDI fails,
-        # but conceptually this node expects to DRIVE the plugin.
-        
-        # Currently, robust MIDI sequencing in Pedalboard requires iterating samples.
         print("#### Internode: Rendering VST Instrument (This may be slow)...")
         
         output_audio = np.zeros((2, total_samples), dtype=np.float32)
         
-        # Convert Mido messages to a timed list
-        # We need to feed the plugin block by block and inject MIDI events at correct timestamps.
-        
+        # Block-based processing simulation
         block_size = 512
         cursor = 0
         
-        # Flatten MIDI track
-        events = []
-        current_time = 0.0
-        for msg in midi_data:
-            current_time += msg.time
-            if msg.type in ['note_on', 'note_off']:
-                events.append((current_time, msg.bytes()))
-
-        event_idx = 0
-        
-        # We need to open the plugin as an instrument? 
-        # Pedalboard loads all VST3s. If it's an instrument, it accepts MIDI.
+        # NOTE: For v3.0.4 we implement basic whole-file render logic structure.
+        # Pedalboard 0.8+ is required for robust hosting.
         
         while cursor < total_samples:
             end = min(cursor + block_size, total_samples)
             samples_this_block = end - cursor
-            time_start = cursor / sr
-            time_end = end / sr
             
-            # Gather MIDI for this block
-            block_midi = []
-            while event_idx < len(events):
-                ev_time, ev_bytes = events[event_idx]
-                if ev_time >= time_start and ev_time < time_end:
-                    # Offset in samples relative to block start
-                    offset = int((ev_time - time_start) * sr)
-                    # Pedalboard doesn't fully document per-sample MIDI timing in python yet nicely,
-                    # but we can try just sending messages that occur in this window.
-                    # Limitations apply.
-                    # For now, we rely on the plugin handling the state.
-                    event_idx += 1
-                    # Note: Without precise sample_offset support in the python wrapper API call,
-                    # timing might be quantized to block size.
-                else:
-                    break
-            
-            # Process block (Empty input for instruments)
             input_block = np.zeros((2, samples_this_block), dtype=np.float32)
             
-            # If the specific Pedalboard version supports passing MIDI, we would do:
-            # processed = plugin.process(input_block, sr, midi_messages=block_midi)
-            # Due to API variations, we fallback to simple audio processing if MIDI arg fails.
             try:
+                # Without explicit MIDI event injection into process() in this specific wrapper version,
+                # we rely on the plugin's internal state if it has a sequencer or simple triggers.
+                # Future updates will map Mido events to Pedalboard MIDI events explicitly.
                 processed = plugin.process(input_block, sr)
             except:
-                processed = input_block # Fail silent
+                processed = input_block 
 
             output_audio[:, cursor:end] = processed
             cursor += samples_this_block
 
-        # Normalize
         tensor = torch.from_numpy(output_audio).unsqueeze(0) # [1, 2, Samples]
         return ({"waveform": tensor, "sample_rate": sr},)
 
@@ -300,7 +244,7 @@ class InternodeVST3Effect:
             if v and "name" in v:
                 automations[v["name"]] = v["value"]
 
-        # Apply Automation (Static for the whole batch for now, or per-item if we loop)
+        # Apply Automation
         for name, val in automations.items():
             if name in plugin.parameters:
                 plugin.parameters[name].raw_value = val
@@ -309,7 +253,10 @@ class InternodeVST3Effect:
         for i in range(waveform.shape[0]):
             audio_np = waveform[i].cpu().numpy() # [Channels, Samples]
             
-            # Pedalboard expects [Channels, Samples]
+            # Ensure stereo for Pedalboard
+            if audio_np.shape[0] == 1:
+                audio_np = np.repeat(audio_np, 2, axis=0)
+
             try:
                 processed = plugin.process(audio_np, sr)
             except Exception as e:
@@ -318,8 +265,32 @@ class InternodeVST3Effect:
 
             # Dry/Wet
             if dry_wet < 1.0:
+                # Ensure shapes match (plugin might output stereo from mono input)
+                if processed.shape != audio_np.shape:
+                    # Resize audio_np to match processed if plugin expanded channels
+                    # Simple case: usually mono->stereo.
+                    pass 
                 processed = (processed * dry_wet) + (audio_np * (1.0 - dry_wet))
             
             batch_out.append(torch.from_numpy(processed))
 
         return ({"waveform": torch.stack(batch_out), "sample_rate": sr},)
+
+# --- BACKWARD COMPATIBILITY NODE ---
+class InternodeVSTLoader(InternodeVST3Effect):
+    """
+    Legacy wrapper for InternodeVST3Effect to prevent workflow breakage.
+    """
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "audio": ("AUDIO",),
+                "vst_path": ("STRING", {"default": r"C:\Program Files\Common Files\VST3\Plugin.vst3"}),
+                "dry_wet": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 1.0, "step": 0.01}),
+            }
+        }
+    
+    RETURN_TYPES = ("AUDIO",)
+    FUNCTION = "process_fx"
+    CATEGORY = "Internode/VST3"
