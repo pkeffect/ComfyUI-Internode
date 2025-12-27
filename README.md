@@ -1,38 +1,14 @@
 # ComfyUI-Internode
 
-![Version](https://img.shields.io/badge/Version-3.0.7-green?style=for-the-badge) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20MacOS-blue?style=for-the-badge) ![License](https://img.shields.io/badge/License-MIT-orange?style=for-the-badge) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-3.2.0-green?style=for-the-badge) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20MacOS-blue?style=for-the-badge) ![License](https://img.shields.io/badge/License-MIT-orange?style=for-the-badge) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge)
 
 ![Internode ComfyUI Custom Nodes](./images/screenshot.png)
 
 **ComfyUI-Internode** is a professional-grade Audio & Multimodal Workstation designed specifically for the ComfyUI ecosystem. It fundamentally transforms ComfyUI from an image-generation tool into a full-fledged **Generative Digital Audio Workstation (DAW)**.
 
-While standard audio nodes in ComfyUI typically offer simple playback or basic saving capabilities, Internode provides a complete signal processing pipeline. It integrates high-fidelity DSP mixing, VST3 plugin hosting, native AI music generation (ACE-Step), spectral editing, and advanced LLM orchestration.
+While standard audio nodes in ComfyUI typically offer simple playback or basic saving capabilities, Internode provides a complete signal processing pipeline. It integrates high-fidelity DSP mixing, VST3 plugin hosting, native AI music generation (ACE-Step), spectral editing, advanced LLM integration via OpenWebUI, and a suite of Video FX tools for content creation.
 
-## 🌟 Key Features at a Glance
-
-*   **Integrated DAW Mixer:** 4 and 8-channel mixing consoles with per-track EQ, Compression, Gating, and Sends.
-*   **Dual-Engine Architecture:** Real-time Web Audio API previews in the browser; Bit-perfect PyTorch rendering in the backend.
-*   **VST3 Host:** Run industry-standard instruments (Serum, Kontakt) and effects (FabFilter, Valhalla) directly inside your node graph.
-*   **AI Music Generation:** Native implementation of **ACE-Step** audio diffusion with LoRA and Lyric support.
-*   **Audio Reactivity:** Drive video generation (AnimateDiff) with precise frequency analysis and beat detection.
-*   **Spectral Editing:** Convert audio to images for "Audio Inpainting" using Stable Diffusion, then convert back to audio.
-*   **Multimodal LLM:** Give eyes and ears to local LLMs (Ollama/LocalAI) for complex analysis and prompt engineering.
-*   **Workflow Annotations:** Sticky notes and Markdown editors to document complex node graphs.
-
----
-
-## 🚀 Version 3.0.7: The Studio Update
-
-As of version 3.0.7, **Internode** has undergone a major architectural restructuring to support massive future expansion.
-
-### Modular "Studio" Structure
-The codebase has been refactored from a flat file list into a Domain-Driven Design (`internode/dsp`, `internode/vst`, `internode/llm`, etc.).
-*   **Why this matters:** This modularity isolates dependencies. If an LLM update breaks, the Audio Mixer remains unaffected. It allows Internode to scale to hundreds of nodes without becoming unmaintainable.
-*   **For Developers:** The root `__init__.py` now acts as a central registry, importing from distinct sub-packages.
-
-### New UI Tools
-*   **Sticky Notes:** Customizable, color-coded notes to organize your graph.
-*   **Legacy VST Support:** Restored the `InternodeVSTLoader` to ensure older workflows continue to function alongside the new VST3 system.
+This suite is engineered for power users who require precise control over audio signal chains, creating a complete **"Studio inside ComfyUI."**
 
 ---
 
@@ -50,6 +26,7 @@ The codebase has been refactored from a flat file list into a Domain-Driven Desi
     *   [The Master Bus](#the-master-bus)
     *   [Media Loaders & Savers](#media-loaders--savers)
 4.  [🔌 Section 2: VST3 Integration (The Studio)](#-section-2-vst3-integration-the-studio)
+    *   [Studio Surface (Interactive Synth)](#-studio-surface-interactive-synth)
     *   [VST Instruments (MIDI)](#vst-instruments-midi)
     *   [VST Effects](#vst-effects)
     *   [Parameter Automation](#parameter-automation)
@@ -57,10 +34,14 @@ The codebase has been refactored from a flat file list into a Domain-Driven Desi
 6.  [📊 Section 4: Audio Reactivity & Video Sync](#-section-4-audio-reactivity--video-sync)
 7.  [🌈 Section 5: Spectral Manipulation (Audio Inpainting)](#-section-5-spectral-manipulation-audio-inpainting)
 8.  [🤖 Section 6: OpenWebUI (LLM Integration)](#-section-6-openwebui-llm-integration)
-9.  [🛠️ Section 7: Utilities & Audio Tools](#-section-7-utilities--audio-tools)
+9.  [🎥 Section 7: Video FX & Media Tools](#-section-7-video-fx--media-tools)
+    *   [Universal Player](#universal-player)
+    *   [A/B Comparator](#ab-comparator)
+10. [🛠️ Section 8: Utilities & Audio Tools](#-section-8-utilities--audio-tools)
+    *   [Asset Browser & Metadata](#asset-browser--metadata)
     *   [Markdown & Sticky Notes](#sticky-notes--markdown)
     *   [Stem Splitter & Sidechain](#stem-splitter--sidechain)
-10. [⚠️ Troubleshooting & FAQ](#-troubleshooting--faq)
+11. [⚠️ Troubleshooting & FAQ](#-troubleshooting--faq)
 
 ---
 
@@ -142,7 +123,7 @@ To utilize the VST Host capabilities, you must have **64-bit VST3** plugins inst
 One of the biggest challenges in Node-based audio is the delay between changing a parameter and hearing the result. Internode solves this with a split architecture:
 
 1.  **The Frontend (Interactive Preview):**
-    *   The custom UI widgets (Mixer, Knobs) are written in Javascript.
+    *   The custom UI widgets (Mixer, Knobs, Studio Surface) are written in Javascript.
     *   They utilize the browser's native **Web Audio API**.
     *   When you drag a slider, the browser applies a digital filter *locally* to the audio preview. This provides **zero-latency feedback**. You hear the EQ change instantly.
 
@@ -247,12 +228,25 @@ Designed for heavy video files.
 Internode allows ComfyUI to host industry-standard VST3 plugins. This is done via the `pedalboard` library.
 *Warning:* VST processing happens on the CPU. Audio tensors are moved from GPU to CPU, processed, and moved back. This may impact generation speed slightly.
 
+### 🎹 Studio Surface (Interactive Synth)
+**Node:** `InternodeStudioSurface`
+
+A revolutionary interactive UI node that brings a hardware synthesizer interface into ComfyUI.
+
+*   **Dual-Deck Design:** Features a Top Deck (Lead/Highs) and a Bottom Deck (Bass/Lows).
+*   **Features:**
+    *   **Oscillators:** Switchable waveforms (Saw, Square, Tri, Sine) with Sub-oscillator mixing.
+    *   **Filters:** Resonant Low-Pass filters with Envelope modulation.
+    *   **Interactive Keyboard:** Clickable keys that generate sound in the browser instantly.
+    *   **State Saving:** Any knob you tweak or setting you change is saved within the workflow metadata.
+*   **Usage:** Use this as a MIDI Controller. It outputs `MIDI_DATA` based on its state, which can drive VST Instruments downstream.
+
 ### 🎹 VST3 Instrument (MIDI to Audio)
 **Node:** `InternodeVST3Instrument`
 
 This node acts as a Synthesizer. It takes MIDI data and renders it into audio using a VST Instrument.
 
-*   **`midi_data`**: Connect an `InternodeMidiLoader` here.
+*   **`midi_data`**: Connect an `InternodeMidiLoader` or the output of `InternodeStudioSurface` here.
 *   **`vst_path`**: Absolute path to a `.vst3` instrument (e.g., *Serum.vst3*, *Kontakt.vst3*).
 *   **`sample_rate`**: Render quality. Standard is 44100Hz.
 *   **`duration_padding`**: Adds silence to the end of the render to capture reverb tails or release samples.
@@ -267,8 +261,8 @@ Applies an audio effect to an existing waveform.
 *   **`vst_path`**: Absolute path to an effect plugin (e.g., *FabFilter Pro-Q3.vst3*, *ValhallaRoom.vst3*).
 *   **`dry_wet`**: Global mix control.
     *   `0.0`: Bypassed (Original signal).
-    *   `0.5`: 50% Original / 50% Effect.
-    *   `1.0`: 100% Wet (Effect only).
+    *   `0.5`: Equal mix.
+    *   `1.0`: Effect only.
 
 ### 🎚️ VST3 Parameter Automation
 **Node:** `InternodeVST3Param`
@@ -299,7 +293,7 @@ Allows you to control any knob inside a VST plugin using ComfyUI values (Floats,
 
 **Node:** `InternodeAceStepGenerator`
 
-This node runs the **ACE-Step** latent diffusion model locally on your GPU to generate music.
+A native implementation of the **ACE-Step** latent diffusion model for audio. It runs locally on your GPU to generate music.
 
 *   **`prompt`**: Describes the genre, mood, instrumentation, and tempo.
     *   *Example:* "Techno, 140 BPM, Aggressive, Industrial, Dark, Synthesizer"
@@ -380,16 +374,46 @@ This node allows you to connect ComfyUI to a running instance of **OpenWebUI** (
 
 ---
 
-## 🛠️ Section 7: Utilities & Audio Tools
+## 🎥 Section 7: Video FX & Media Tools
+
+Powerful preview and comparison tools usually found in video editing software (NLEs).
+
+### **Universal Player**
+**Node:** `InternodeUniversalPlayer`
+
+A robust media player that sits inside your node graph.
+*   **Input:** Accepts `IMAGE` (video frames), `AUDIO`, or both.
+*   **Backend:** Automatically uses FFmpeg to mux the video and audio into a high-quality temporary file for playback.
+*   **UI Features:** Loop, Volume, Fullscreen, and Timeline scrubbing. Useful for verifying Audio/Video sync before running a final "Video Combine".
+
+### **A/B Comparator**
+**Node:** `InternodeABComparator`
+
+A "Before/After" slider tool.
+*   **Input:** Two Images or Two Video Batches.
+*   **UI:** A draggable slider. Drag left to reveal Image B, right to reveal Image A.
+*   **Video Mode:** If inputs are videos, they play in perfect synchronization. Use this to compare the output of a "High-Res Fix" pass against the original, or compare two different LoRAs side-by-side.
+
+---
+
+## 🛠️ Section 8: Utilities & Audio Tools
+
+### Asset Browser & Metadata
+*   **`InternodeAssetBrowser`**: Replaces the clunky standard dropdown list with a visual grid of thumbnails.
+    *   *Features:* Search bar, thumbnail preview, and "Smart Load" (detects if you picked an image or a video and loads it correctly).
+*   **`InternodeMetadataInspector`**: Inspects files on your disk.
+    *   *Images:* Extracts generation parameters (Prompt, Seed, Steps) from ComfyUI/A1111 PNGs.
+    *   *Audio:* Displays sample rate, bit depth, and duration.
+    *   *Extraction:* You can type a key (e.g., "Seed") to output that specific value as a string for use in your graph.
 
 ### Sticky Notes & Markdown
 Essential tools for workflow documentation.
 
-*   **`InternodeStickyNote` (NEW):**
+*   **`InternodeStickyNote`**:
     *   A highly visible, resizeable "Post-it" style note.
     *   **Customization:** Change Background Color (Yellow, Pink, Blue, etc.) and Text Color to color-code your graph.
     *   **Usage:** Perfect for leaving instructions or TODOs on top of node groups.
-*   **`InternodeMarkdownNote`:**
+*   **`InternodeMarkdownNote`**:
     *   A full-featured Markdown editor.
     *   **Features:** Headers, Lists, Code Blocks, Tables.
     *   **Security:** Automatically sanitizes HTML to prevent XSS attacks (strips `<script>` tags).
@@ -447,7 +471,7 @@ Uses the **Demucs** Hybrid Transformer model to un-mix a song.
 
 ### 🟠 Problem: Markdown/Sticky Note text disappears when I reload.
 **Solution:**
-Ensure you are using **Internode v3.0.7**. We pushed a hotfix to handle DOM serialization correctly. Older versions did not re-populate the text box after the browser refreshed.
+Ensure you are using **Internode v3.0.7+**. We pushed a hotfix to handle DOM serialization correctly. Older versions did not re-populate the text box after the browser refreshed.
 
 ---
 

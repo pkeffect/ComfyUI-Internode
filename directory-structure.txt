@@ -1,0 +1,55 @@
+# Generated Structure
+# Files: 42 | Dirs: 9
+
+ComfyUI-Internode/
+├── AUDIT.md
+├── DEVELOPER_NOTES.md
+├── LICENSE
+├── README.md
+├── __init__.py
+├── comfyui.json
+├── install.py
+├── internode/
+│   ├── __init__.py
+│   ├── analysis/
+│   │   ├── __init__.py
+│   │   └── analysis_nodes.py
+│   ├── dsp/
+│   │   ├── __init__.py
+│   │   ├── audio_tools_nodes.py
+│   │   └── dsp_nodes.py
+│   ├── generative/
+│   │   ├── __init__.py
+│   │   └── acestep_nodes.py
+│   ├── llm/
+│   │   ├── __init__.py
+│   │   ├── config.json
+│   │   ├── openwebui_api.py
+│   │   └── openwebui_nodes.py
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── asset_browser.py
+│   │   ├── markdown_node.py
+│   │   ├── metadata_inspector.py
+│   │   └── sticky_note.py
+│   ├── video_fx/
+│   │   ├── __init__.py
+│   │   ├── ab_comparator.py
+│   │   └── universal_player.py
+│   └── vst/
+│       ├── __init__.py
+│       ├── studio_surface.py
+│       └── vst_nodes.py
+├── js/
+│   ├── internode_asset_browser.js
+│   ├── internode_comparator.js
+│   ├── internode_loader.js
+│   ├── internode_markdown.js
+│   ├── internode_metadata.js
+│   ├── internode_mixer.js
+│   ├── internode_player.js
+│   ├── internode_sticky.js
+│   ├── internode_studio.js
+│   └── internode_vst.js
+├── project.toml
+└── requirements.txt

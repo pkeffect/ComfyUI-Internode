@@ -1,4 +1,4 @@
-# ComfyUI/custom_nodes/ComfyUI-Internode/sticky_note.py
+# ComfyUI/custom_nodes/ComfyUI-Internode/internode/utils/sticky_note.py
 # VERSION: 3.0.8
 
 class InternodeStickyNote:
@@ -17,7 +17,7 @@ class InternodeStickyNote:
 
     RETURN_TYPES = ("STRING",)
     FUNCTION = "do_nothing"
-    CATEGORY = "Internode/Utilities"
+    CATEGORY = "Internode/Utils"  # Fixed: Matches the Markdown node folder
 
     def do_nothing(self, text, note_color, text_color):
         return (text,)

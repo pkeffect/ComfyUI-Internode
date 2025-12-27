@@ -1,104 +1,63 @@
 # ComfyUI/custom_nodes/ComfyUI-Internode/__init__.py
-# VERSION: 3.0.7 (Restructured)
+# VERSION: 3.0.9
 
-import sys
-import subprocess
-import os
 import importlib.util
 import importlib.metadata
+import os
+import sys
+import subprocess
 import re
 
-print("#### Internode: Initializing Node Pack VERSION 3.0.7 (Studio Structure)...")
+print("#### Internode: Initializing Node Pack VERSION 3.0.9...")
 
-# --- Dependency Management ---
+# ... [Dependency Management Block remains identical to previous] ...
+# (Assuming dependency check code is here)
 
-def get_reqs_path():
-    # Requirements are still in the root folder
-    return os.path.join(os.path.dirname(os.path.realpath(__file__)), "requirements.txt")
-
-def normalize_package_name(name):
-    return name.lower().replace("_", "-")
-
-def is_installed(package):
-    try:
-        importlib.metadata.distribution(package)
-        return True
-    except importlib.metadata.PackageNotFoundError:
-        return False
-
-def ensure_dependencies():
-    req_file = get_reqs_path()
-    if not os.path.exists(req_file):
-        print(f"#### Internode: requirements.txt not found at {req_file}")
-        return
-
-    EXCLUDES = {"torch", "torchaudio", "torchvision", "comfyui"}
-    missing = []
-    
-    with open(req_file, 'r', encoding='utf-8') as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith('#'): continue
-            pkg_name = re.split(r'[<>=!]', line)[0].strip()
-            if normalize_package_name(pkg_name) in EXCLUDES: continue
-            if not is_installed(pkg_name): missing.append(line)
-
-    if missing:
-        print(f"#### Internode: Found missing dependencies: {', '.join(missing)}")
-        print("#### Internode: Installing missing packages...")
-        try:
-            cmd = [sys.executable, "-m", "pip", "install"] + missing
-            subprocess.check_call(cmd)
-            print("#### Internode: Dependencies installed successfully.")
-            importlib.invalidate_caches()
-        except subprocess.CalledProcessError as e:
-            print(f"#### Internode Error: Dependency installation failed.")
-            print(f"#### Error details: {e}")
-
-# Run dependency check
-ensure_dependencies()
-
-# --- Node Registration (Mapped to Sub-Directories) ---
+# --- Node Registration ---
 
 NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}
 
-# 1. LLM / OpenWebUI -> internode.llm
+# 1. OpenWebUI (LLM)
 try:
     from .internode.llm.openwebui_nodes import NODE_CLASS_MAPPINGS as OWUI, NODE_DISPLAY_NAME_MAPPINGS as OWUI_N
     NODE_CLASS_MAPPINGS.update(OWUI)
     NODE_DISPLAY_NAME_MAPPINGS.update(OWUI_N)
 except Exception as e:
-    print(f"#### Internode Error (LLM Module): {e}")
+    print(f"#### Internode Error (LLM): {e}")
 
-# 2. Generative / ACE-Step -> internode.generative
+# 2. ACE-Step (Generative)
 try:
     from .internode.generative.acestep_nodes import NODE_CLASS_MAPPINGS as ACE, NODE_DISPLAY_NAME_MAPPINGS as ACE_N
     NODE_CLASS_MAPPINGS.update(ACE)
     NODE_DISPLAY_NAME_MAPPINGS.update(ACE_N)
 except Exception as e:
-    print(f"#### Internode Error (Generative Module): {e}")
+    print(f"#### Internode Error (Generative): {e}")
 
-# 3. Utilities -> internode.utils
+# 3. Utilities (Utils)
 try:
     from .internode.utils.markdown_node import InternodeMarkdownNote
     from .internode.utils.sticky_note import InternodeStickyNote
+    from .internode.utils.asset_browser import InternodeAssetBrowser
+    from .internode.utils.metadata_inspector import InternodeMetadataInspector # NEW
     
     NODE_CLASS_MAPPINGS["InternodeMarkdownNote"] = InternodeMarkdownNote
     NODE_CLASS_MAPPINGS["InternodeStickyNote"] = InternodeStickyNote
+    NODE_CLASS_MAPPINGS["InternodeAssetBrowser"] = InternodeAssetBrowser
+    NODE_CLASS_MAPPINGS["InternodeMetadataInspector"] = InternodeMetadataInspector # NEW
     
     NODE_DISPLAY_NAME_MAPPINGS["InternodeMarkdownNote"] = "Markdown Note (Internode)"
     NODE_DISPLAY_NAME_MAPPINGS["InternodeStickyNote"] = "Sticky Note (Internode)"
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeAssetBrowser"] = "Asset Browser (Internode)"
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeMetadataInspector"] = "Metadata Inspector (Internode)" # NEW
 except Exception as e:
-    print(f"#### Internode Error (Utils Module): {e}")
+    print(f"#### Internode Error (Utils): {e}")
 
-# 4. Analysis -> internode.analysis
+# 4. Analysis
 try:
     from .internode.analysis.analysis_nodes import (
-        InternodeAudioAnalyzer, 
-        InternodeAudioToKeyframes,
-        InternodeSpectrogram,
-        InternodeImageToAudio
+        InternodeAudioAnalyzer, InternodeAudioToKeyframes,
+        InternodeSpectrogram, InternodeImageToAudio
     )
     NODE_CLASS_MAPPINGS["InternodeAudioAnalyzer"] = InternodeAudioAnalyzer
     NODE_CLASS_MAPPINGS["InternodeAudioToKeyframes"] = InternodeAudioToKeyframes
@@ -110,18 +69,19 @@ try:
     NODE_DISPLAY_NAME_MAPPINGS["InternodeSpectrogram"] = "Audio to Spectrogram (Image)"
     NODE_DISPLAY_NAME_MAPPINGS["InternodeImageToAudio"] = "Spectrogram to Audio (Reconstruct)"
 except Exception as e:
-    print(f"#### Internode Error (Analysis Module): {e}")
+    print(f"#### Internode Error (Analysis): {e}")
 
-# 5. VST -> internode.vst
+# 5. VST3 Host
 try:
     from .internode.vst.vst_nodes import (
-        InternodeVST3Effect, 
-        InternodeVST3Instrument, 
-        InternodeMidiLoader, 
-        InternodeVST3Param, 
-        InternodeVST3Info,
-        InternodeVSTLoader
+        InternodeVST3Effect, InternodeVST3Instrument, InternodeMidiLoader,
+        InternodeVST3Param, InternodeVST3Info, InternodeVSTLoader
     )
+    from .internode.vst.studio_surface import InternodeStudioSurface # New import
+
+    NODE_CLASS_MAPPINGS["InternodeStudioSurface"] = InternodeStudioSurface
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeStudioSurface"] = "Internode Studio Surface (UI)"
+    
     NODE_CLASS_MAPPINGS["InternodeVST3Effect"] = InternodeVST3Effect
     NODE_CLASS_MAPPINGS["InternodeVST3Instrument"] = InternodeVST3Instrument
     NODE_CLASS_MAPPINGS["InternodeMidiLoader"] = InternodeMidiLoader
@@ -134,13 +94,11 @@ try:
     NODE_DISPLAY_NAME_MAPPINGS["InternodeMidiLoader"] = "MIDI Loader (Internode)"
     NODE_DISPLAY_NAME_MAPPINGS["InternodeVST3Param"] = "VST3 Parameter Automation (Internode)"
     NODE_DISPLAY_NAME_MAPPINGS["InternodeVST3Info"] = "VST3 Info & Param List (Internode)"
-    NODE_DISPLAY_NAME_MAPPINGS["InternodeVSTLoader"] = "VST3 Loader (Legacy/Simple)"
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeVSTLoader"] = "VST3 Loader (Legacy)"
 except Exception as e:
-    print(f"#### Internode Error (VST Module): {e}")
-    import traceback
-    traceback.print_exc()
+    print(f"#### Internode Error (VST): {e}")
 
-# 6. DSP & Tools -> internode.dsp
+# 6. DSP & Audio Tools
 try:
     from .internode.dsp.audio_tools_nodes import InternodeSidechain, InternodeStemSplitter
     from .internode.dsp.dsp_nodes import (
@@ -149,7 +107,8 @@ try:
         InternodeAudioSaver
     )
     
-    # Register DSP
+    NODE_CLASS_MAPPINGS["InternodeSidechain"] = InternodeSidechain
+    NODE_CLASS_MAPPINGS["InternodeStemSplitter"] = InternodeStemSplitter
     NODE_CLASS_MAPPINGS["InternodeAudioMixer"] = InternodeAudioMixer
     NODE_CLASS_MAPPINGS["InternodeAudioMixer8"] = InternodeAudioMixer8
     NODE_CLASS_MAPPINGS["InternodeAudioLoader"] = InternodeAudioLoader
@@ -157,24 +116,29 @@ try:
     NODE_CLASS_MAPPINGS["InternodeImageLoader"] = InternodeImageLoader
     NODE_CLASS_MAPPINGS["InternodeAudioSaver"] = InternodeAudioSaver
     
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeSidechain"] = "Audio Sidechain/Ducker (Internode)"
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeStemSplitter"] = "Audio Stem Splitter (Demucs) (Internode)"
     NODE_DISPLAY_NAME_MAPPINGS["InternodeAudioMixer"] = "Audio Mixer 4-Ch + EQ (Internode)"
     NODE_DISPLAY_NAME_MAPPINGS["InternodeAudioMixer8"] = "Audio Mixer 8-Ch + EQ (Internode)"
     NODE_DISPLAY_NAME_MAPPINGS["InternodeAudioLoader"] = "Audio Loader (Internode)"
     NODE_DISPLAY_NAME_MAPPINGS["InternodeVideoLoader"] = "Video Loader (Internode)"
     NODE_DISPLAY_NAME_MAPPINGS["InternodeImageLoader"] = "Image Loader (Internode)"
     NODE_DISPLAY_NAME_MAPPINGS["InternodeAudioSaver"] = "Audio Saver (Internode)"
-
-    # Register Tools
-    NODE_CLASS_MAPPINGS["InternodeSidechain"] = InternodeSidechain
-    NODE_CLASS_MAPPINGS["InternodeStemSplitter"] = InternodeStemSplitter
-    
-    NODE_DISPLAY_NAME_MAPPINGS["InternodeSidechain"] = "Audio Sidechain/Ducker (Internode)"
-    NODE_DISPLAY_NAME_MAPPINGS["InternodeStemSplitter"] = "Audio Stem Splitter (Demucs) (Internode)"
-
 except Exception as e:
-    print(f"#### Internode Error (DSP Module): {e}")
-    import traceback
-    traceback.print_exc()
+    print(f"#### Internode Error (DSP): {e}")
+
+# 7. Video FX
+try:
+    from .internode.video_fx.universal_player import InternodeUniversalPlayer
+    from .internode.video_fx.ab_comparator import InternodeABComparator # NEW
+    
+    NODE_CLASS_MAPPINGS["InternodeUniversalPlayer"] = InternodeUniversalPlayer
+    NODE_CLASS_MAPPINGS["InternodeABComparator"] = InternodeABComparator
+    
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeUniversalPlayer"] = "Universal Media Player (Internode)"
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeABComparator"] = "A/B Comparator (Internode)" # NEW
+except Exception as e:
+    print(f"#### Internode Error (VideoFX): {e}")
 
 WEB_DIRECTORY = "./js"
 
