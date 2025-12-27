@@ -1,6 +1,6 @@
 # ComfyUI-Internode
 
-![Version](https://img.shields.io/badge/Version-3.2.0-green?style=for-the-badge) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20MacOS-blue?style=for-the-badge) ![License](https://img.shields.io/badge/License-MIT-orange?style=for-the-badge) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-3.4.0-green?style=for-the-badge) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20MacOS-blue?style=for-the-badge) ![License](https://img.shields.io/badge/License-MIT-orange?style=for-the-badge) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge)
 
 ![Internode ComfyUI Custom Nodes](./images/screenshot.png)
 
@@ -30,25 +30,25 @@ This suite is engineered for power users who require precise control over audio 
     *   [VST Instruments (MIDI)](#vst-instruments-midi)
     *   [VST Effects](#vst-effects)
     *   [Parameter Automation](#parameter-automation)
-5.  [🎼 Section 3: AI Music Generation (ACE-Step)](#-section-3-ai-music-generation-ace-step)
+5.  [🎼 Section 3: Generative Audio & Music](#-section-3-generative-audio--music)
+    *   [ACE-Step Music Generation](#ace-step-music-generation)
+    *   [Synthesis & Ambience](#synthesis--ambience)
 6.  [📊 Section 4: Audio Reactivity & Video Sync](#-section-4-audio-reactivity--video-sync)
 7.  [🌈 Section 5: Spectral Manipulation (Audio Inpainting)](#-section-5-spectral-manipulation-audio-inpainting)
-8.  [🤖 Section 6: OpenWebUI (LLM Integration)](#-section-6-openwebui-llm-integration)
-    *   [Chat & Vision](#internode_openwebuinode)
-    *   [Enricher, Critic, & Renamer](#advanced-llm-tools)
+8.  [🤖 Section 6: OpenWebUI (LLM Intelligence)](#-section-6-openwebui-llm-intelligence)
+    *   [Core Chat & Configuration](#core-chat--configuration)
+    *   [Text Intelligence](#text-intelligence)
+    *   [Vision Intelligence](#vision-intelligence)
+    *   [Video Intelligence](#video-intelligence)
+    *   [Audio Intelligence](#audio-intelligence)
 9.  [🎥 Section 7: Video FX & Post-Production](#-section-7-video-fx--post-production)
-    *   [Universal Player](#universal-player)
-    *   [A/B Comparator](#ab-comparator)
+    *   [Players & Comparators](#players--comparators)
     *   [Color, Grain & Glitch](#color-grain--glitch)
-    *   [Speed Ramping](#speed-ramping)
-10. [🛠️ Section 8: Utilities & Audio Tools](#-section-8-utilities--audio-tools)
-    *   [Asset Browser & Metadata](#asset-browser--metadata)
-    *   [Markdown & Sticky Notes](#sticky-notes--markdown)
-    *   [Stem Splitter & Sidechain](#stem-splitter--sidechain)
-11. [🧠 Section 9: Logic, Control & Automation](#-section-9-logic-control--automation)
-    *   [LFOs & Envelopes](#lfos--envelopes)
-    *   [Sequencers & Remappers](#sequencers--remappers)
-12. [⚠️ Troubleshooting & FAQ](#-troubleshooting--faq)
+    *   [Smart Video Processing](#smart-video-processing)
+10. [🖼️ Section 8: Image FX & Processing](#-section-8-image-fx--processing)
+11. [🛠️ Section 9: Utilities & Audio Tools](#-section-9-utilities--audio-tools)
+12. [🧠 Section 10: Logic, Control & Automation](#-section-10-logic-control--automation)
+13. [⚠️ Troubleshooting & FAQ](#-troubleshooting--faq)
 
 ---
 
@@ -296,8 +296,11 @@ Allows you to control any knob inside a VST plugin using ComfyUI values (Floats,
 
 ---
 
-## 🎼 Section 3: AI Music Generation (ACE-Step)
+## 🎼 Section 3: Generative Audio & Music
 
+A suite of tools for generating music, sound effects, and ambience directly within ComfyUI.
+
+### ACE-Step Music Generation
 **Node:** `InternodeAceStepGenerator`
 
 A native implementation of the **ACE-Step** latent diffusion model for audio. It runs locally on your GPU to generate music.
@@ -316,6 +319,16 @@ A native implementation of the **ACE-Step** latent diffusion model for audio. It
 *   **`guidance_scale`**: The CFG (Classifier Free Guidance) scale. Controls how strictly the model adheres to your prompt versus creative freedom.
     *   *Range:* 5.0 to 15.0 is usually the sweet spot.
 *   **`lora_name_or_path`**: Load a `.safetensors` LoRA model to shift the style (e.g., "Chinese Rap", "Anime Song").
+
+### Synthesis & Ambience
+*   **SFX Generator (Synth):**
+    *   A lightweight synthesizer for generating test tones or simple sound effects (like laser blasts, beeps, and FM textures) based on text prompts. Useful for testing audio pipelines without loading large models.
+*   **Ambience Generator:**
+    *   Generates continuous environmental background audio using DSP algorithms.
+    *   *Types:* White Noise, Pink Noise, Rain, Wind, City Traffic.
+*   **Audio Style Match (DSP):**
+    *   Analyzes the spectral profile (EQ/Volume) of a `reference_audio` and applies it to a `target_audio`.
+    *   Use this to make a clean voiceover sound like it was recorded in the same room as a reference track.
 
 ---
 
@@ -365,25 +378,47 @@ This workflow allows you to edit audio using Image Editing techniques.
 
 ---
 
-## 🤖 Section 6: OpenWebUI (LLM Integration)
+## 🤖 Section 6: OpenWebUI (LLM Intelligence)
 
-This node suite connects ComfyUI to a running instance of **OpenWebUI** (front-ending Ollama, LocalAI, vLLM, or OpenAI). It goes beyond simple text generation to include vision and automation capabilities.
+This extensive node suite connects ComfyUI to **OpenWebUI** (Ollama, LocalAI, vLLM, OpenAI), providing deep intelligence for Text, Vision, Video, and Audio tasks.
 
-### **`Internode_OpenWebUINode`**
-*   **Context Aware (Memory):** Unlike standard prompt nodes, this node accepts a `history` input. By creating a feedback loop (passing the output history back into the input), the LLM can remember previous instructions, allowing for multi-turn iterative refinement of prompts.
-*   **Multimodal Vision:** If you connect an `IMAGE` to this node, it automatically converts it for Vision-capable models (LLaVA, BakLLaVA).
-    *   *Scenario:* Connect a "Preview Image" from a generation to this node. Ask the LLM: *"What is wrong with this image?"*. The LLM (using LLaVA or similar) can critique the generation.
+### Core Chat & Configuration
+*   **`Internode_OpenWebUINode`:** The central hub. Supports Context/History (memory loop), Multimodal inputs (Image/Video/Audio), and manual model selection.
+*   **`Internode_OpenWebUIServerConfig`:** Defines your API host and key globally.
 
-### **Advanced LLM Tools**
-*   **Internode Prompt Enricher:**
-    *   Takes a basic idea (e.g., "A cat") and expands it into a highly detailed, stylistically coherent prompt using a local LLM.
-    *   **Chaos:** A slider to control the "temperature" and hallucination level of the enrichment.
-*   **Internode Image Critic:**
-    *   A quality-control node. Pass an image to it, and a Vision model will score it (1-10) and provide a textual critique of flaws.
-    *   *Usage:* Perfect for filtering batch generations automatically.
-*   **Internode Smart Renamer:**
-    *   Uses a Vision LLM to analyze the image content and automatically saves the file with a descriptive, SEO-friendly name (e.g., `cyberpunk_street_rainy_neon.png`).
-    *   Forget generic filenames like `ComfyUI_005.png`.
+### Text Intelligence
+Specialized nodes that use system-prompting to turn a general LLM into a specific tool:
+*   **Prompt Optimizer:** Analyzes prompts for clarity/detail and rewrites them. Modes: *Light Polish, Detail Expansion, Creative Overhaul*.
+*   **Style Transfer:** Rewrites any text to match a specific style (e.g., "Cyberpunk", "Shakespearean").
+*   **Story Brancher:** Generates multiple creative plot twists or branches from a narrative start point.
+*   **Character Generator:** Creates detailed profiles (Archetype, Backstory, Traits) from a name.
+*   **Dialogue Writer:** Generates realistic conversation scripts between defined characters.
+*   **World Builder:** Expands high-level concepts into detailed lore, geography, or culture descriptions.
+*   **Code Generator:** Writes functional code (Python, GLSL, HTML) from descriptions.
+*   **Summarizer:** Condenses long texts into sentences, paragraphs, or bullet points.
+*   **Classifier:** Categorizes input text into defined buckets (Positive/Negative, SFW/NSFW, etc.).
+*   **Persona Switcher:** Rewrites text as if spoken by a specific persona (e.g., "A Pirate").
+
+### Vision Intelligence
+Nodes that use **Vision LLMs** (LLaVA, BakLLaVA) to analyze images:
+*   **Image Prompt Refiner:** Critiques an input image against its original prompt and generates a *revised* prompt to fix flaws.
+*   **Image Style Matcher:** Analyzes the artistic style of an image and outputs a prompt to replicate it.
+*   **Image Content Extractor:** Identifies objects and concepts, outputting them as a List or JSON.
+*   **Inpaint Prompt Generator:** Analyzes an image's context and writes a prompt specifically for filling masked areas coherently.
+*   **Image Critic:** Scores images (1-10) and provides detailed feedback on composition and quality.
+*   **Smart Renamer:** Analyzes image content and saves the file with a descriptive, SEO-friendly filename.
+
+### Video Intelligence
+*   **Video Scene Narrator:** Analyzes a sequence of frames and generates a cohesive voiceover script or narrative description.
+*   **AI Video Colorist:** Analyzes a frame and a "Mood" prompt, then outputs precise **Lift/Gamma/Gain** values to drive the Color Grade node.
+*   **Video Scene Descriptor:** Outputs a frame-by-frame text description of the action.
+*   **Video Object Tracker:** Tracks a specific object (e.g., "red car") across frames and describes its movement.
+
+### Audio Intelligence
+*   **Music Prompt Generator:** Creates detailed prompts for music models (Genre, Mood, Tempo, Instruments).
+*   **Music Structure Planner:** Generates a timeline plan (Intro -> Verse -> Chorus) for a song.
+*   **Music Critic:** Analyzes descriptions of audio and provides mixing/mastering feedback.
+*   **Vocal Script/Lyrics:** Writes lyrics with embedded performance notes (e.g., `[breath]`, `[vibrato]`).
 
 ---
 
@@ -391,21 +426,9 @@ This node suite connects ComfyUI to a running instance of **OpenWebUI** (front-e
 
 Internode provides a suite of video editing tools to finish your generations without leaving ComfyUI.
 
-### Universal Player
-**Node:** `InternodeUniversalPlayer`
-
-A robust media player that sits inside your node graph.
-*   **Input:** Accepts `IMAGE` (video frames), `AUDIO`, or both.
-*   **Backend:** Automatically uses FFmpeg to mux the video and audio into a high-quality temporary file for playback.
-*   **UI Features:** Loop, Volume, Fullscreen, and Timeline scrubbing. Useful for verifying Audio/Video sync before running a final "Video Combine".
-
-### A/B Comparator
-**Node:** `InternodeABComparator`
-
-A "Before/After" slider tool.
-*   **Input:** Two Images or Two Video Batches.
-*   **UI:** A draggable slider. Drag left to reveal Image B, right to reveal Image A.
-*   **Video Mode:** If inputs are videos, they play in perfect synchronization. Use this to compare the output of a "High-Res Fix" pass against the original, or compare two different LoRAs side-by-side.
+### Players & Comparators
+*   **`InternodeUniversalPlayer`:** A robust media player that sits inside your node graph. It uses FFmpeg to mux video and audio into a temp file for seamless playback with scrubbing, looping, and fullscreen support.
+*   **`InternodeABComparator`:** A "Before/After" slider tool. Compare raw vs. upscaled images, or check how a LoRA affects a video by scrubbing a slider between two inputs in real-time.
 
 ### Color, Grain & Glitch
 *   **Internode Color Grade (3-Way):**
@@ -417,16 +440,36 @@ A "Before/After" slider tool.
 *   **Internode Datamosh / Glitch:**
     *   Simulates digital signal rot. It breaks motion vectors and shifts color channels.
     *   **Feature:** Connect an audio "Beat" trigger (from the Audio Analyzer) to this node to glitch the video perfectly in sync with snare hits.
+*   **Speed Ramping:**
+    *   Variable speed playback (Time Remapping). Input a float curve to create smooth slow-motion to fast-forward transitions.
 
-### Speed Ramping
-*   **Internode Frame Interpolator (SpeedRamp):**
-    *   Variable speed playback (Time Remapping).
-    *   **Input:** A video and a float curve.
-    *   **Output:** Creates smooth slow-motion to fast-forward transitions (Ramping) based on the curve data.
+### Smart Video Processing
+*   **Optical Flow Interpolator:**
+    *   A lightweight, CPU-based frame interpolator using Dense Optical Flow. Smooths out choppy video without needing heavy AI models like RIFE.
+*   **Motion Vector Glitch:**
+    *   A smart glitch effect that only corrupts pixels where high motion is detected. Creates dynamic, "reactive" datamoshing.
+*   **Batch Style Transfer:**
+    *   Applies the color statistics (Mean/Std Dev) of a reference style image to *every frame* of a target video, ensuring consistent grading.
 
 ---
 
-## 🛠️ Section 8: Utilities & Audio Tools
+## 🖼️ Section 8: Image FX & Processing
+
+New tools for image manipulation and enhancement.
+
+*   **Smart Aspect Ratio & Crop:**
+    *   Intelligently crops or pads images to standard ratios (16:9, 1:1, 9:16).
+    *   *Modes:* Crop Center (lossy) or Pad Letterbox (preserves content).
+*   **Image Detail Enhancer:**
+    *   Uses frequency separation (Unsharp Masking) to enhance fine textures and edges without destroying the image structure.
+*   **Depth Map Generator (HF):**
+    *   Uses HuggingFace pipeline models (e.g., `Depth-Anything`) to generate high-quality depth maps from 2D images.
+*   **Color Match / Style Transfer:**
+    *   Applies the color palette of a reference image to a target image using Reinhard color transfer logic.
+
+---
+
+## 🛠️ Section 9: Utilities & Audio Tools
 
 ### Asset Browser & Metadata
 *   **`InternodeAssetBrowser`**: Replaces the clunky standard dropdown list with a visual grid of thumbnails.
@@ -461,7 +504,7 @@ Essential tools for workflow documentation.
 
 ---
 
-## 🧠 Section 9: Logic, Control & Automation
+## 🧠 Section 10: Logic, Control & Automation
 
 Tools to automate parameters and create complex, time-varying logic for your workflows.
 

@@ -1,5 +1,5 @@
 # Generated Structure
-# Files: 46 | Dirs: 10
+# Files: 53 | Dirs: 11
 
 ComfyUI-Internode/
 ├── AUDIT.md
@@ -24,12 +24,19 @@ ComfyUI-Internode/
 │   │   └── dsp_nodes.py
 │   ├── generative/
 │   │   ├── __init__.py
-│   │   └── acestep_nodes.py
+│   │   ├── acestep_nodes.py
+│   │   └── audio_gen_nodes.py
+│   ├── image_fx/
+│   │   ├── __init__.py
+│   │   └── image_nodes.py
 │   ├── llm/
 │   │   ├── __init__.py
+│   │   ├── audio_llm_nodes.py
 │   │   ├── config.json
 │   │   ├── openwebui_api.py
-│   │   └── openwebui_nodes.py
+│   │   ├── openwebui_nodes.py
+│   │   ├── video_llm_nodes.py
+│   │   └── vision_nodes.py
 │   ├── utils/
 │   │   ├── __init__.py
 │   │   ├── asset_browser.py
@@ -40,7 +47,8 @@ ComfyUI-Internode/
 │   │   ├── __init__.py
 │   │   ├── ab_comparator.py
 │   │   ├── post_production_nodes.py
-│   │   └── universal_player.py
+│   │   ├── universal_player.py
+│   │   └── video_smart_nodes.py
 │   └── vst/
 │       ├── __init__.py
 │       ├── studio_surface.py
