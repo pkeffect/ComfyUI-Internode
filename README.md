@@ -1,6 +1,6 @@
 # ComfyUI-Internode
 
-![Version](https://img.shields.io/badge/Version-3.4.0-green?style=for-the-badge) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20MacOS-blue?style=for-the-badge) ![License](https://img.shields.io/badge/License-MIT-orange?style=for-the-badge) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-3.5.0-green?style=for-the-badge) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20MacOS-blue?style=for-the-badge) ![License](https://img.shields.io/badge/License-MIT-orange?style=for-the-badge) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge)
 
 ![Internode ComfyUI Custom Nodes](./images/screenshot.png)
 
@@ -234,6 +234,7 @@ Designed for heavy video files.
 
 Internode allows ComfyUI to host industry-standard VST3 plugins. This is done via the `pedalboard` library.
 *Warning:* VST processing happens on the CPU. Audio tensors are moved from GPU to CPU, processed, and moved back. This may impact generation speed slightly.
+*Update v3.5.0:* Included C++ batch processing optimization to significantly reduce Python-overhead when rendering VSTs.
 
 ### 🎹 Studio Surface (Interactive Synth)
 **Node:** `InternodeStudioSurface`
@@ -446,6 +447,7 @@ Internode provides a suite of video editing tools to finish your generations wit
 ### Smart Video Processing
 *   **Optical Flow Interpolator:**
     *   A lightweight, CPU-based frame interpolator using Dense Optical Flow. Smooths out choppy video without needing heavy AI models like RIFE.
+    *   **New in v3.5:** Includes `flow_scale` parameter. Set to `0.5` or `0.25` for significantly faster processing on CPU with minimal quality loss.
 *   **Motion Vector Glitch:**
     *   A smart glitch effect that only corrupts pixels where high motion is detected. Creates dynamic, "reactive" datamoshing.
 *   **Batch Style Transfer:**
@@ -474,6 +476,7 @@ New tools for image manipulation and enhancement.
 ### Asset Browser & Metadata
 *   **`InternodeAssetBrowser`**: Replaces the clunky standard dropdown list with a visual grid of thumbnails.
     *   *Features:* Search bar, thumbnail preview, and "Smart Load" (detects if you picked an image or a video and loads it correctly).
+    *   **Lazy Loading:** Now supports Infinite Scroll to handle libraries with 5,000+ assets without freezing the browser.
 *   **`InternodeMetadataInspector`**: Inspects files on your disk.
     *   *Images:* Extracts generation parameters (Prompt, Seed, Steps) from ComfyUI/A1111 PNGs.
     *   *Audio:* Displays sample rate, bit depth, and duration.
@@ -561,8 +564,3 @@ Tools to automate parameters and create complex, time-varying logic for your wor
 ### 🟠 Problem: Markdown/Sticky Note text disappears when I reload.
 **Solution:**
 Ensure you are using **Internode v3.0.7+**. We pushed a hotfix to handle DOM serialization correctly. Older versions did not re-populate the text box after the browser refreshed.
-
----
-
-**ComfyUI-Internode**
-*Built for the Audio AI Revolution.*

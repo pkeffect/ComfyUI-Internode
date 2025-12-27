@@ -1,5 +1,5 @@
 # ComfyUI/custom_nodes/ComfyUI-Internode/internode/video_fx/video_smart_nodes.py
-# VERSION: 3.3.0
+# VERSION: 3.4.0
 
 import torch
 import numpy as np
@@ -8,7 +8,7 @@ import cv2
 class InternodeOpticalFlowInterpolator:
     """
     A lightweight 'AI' interpolator using Dense Optical Flow (Farneback algorithm).
-    No heavy model weights required. Better than blending, faster than RIFE.
+    OPTIMIZED: Includes downscaling parameter to reduce CPU load significantly.
     """
     @classmethod
     def INPUT_TYPES(s):
@@ -16,6 +16,7 @@ class InternodeOpticalFlowInterpolator:
             "required": {
                 "images": ("IMAGE",),
                 "multiplier": ("INT", {"default": 2, "min": 2, "max": 4}),
+                "flow_scale": ("FLOAT", {"default": 0.5, "min": 0.1, "max": 1.0, "step": 0.1, "tooltip": "Downscale factor for flow calculation. 0.5 = 4x faster."}),
             }
         }
 
@@ -23,13 +24,17 @@ class InternodeOpticalFlowInterpolator:
     FUNCTION = "interpolate"
     CATEGORY = "Internode/VideoFX"
 
-    def interpolate(self, images, multiplier):
+    def interpolate(self, images, multiplier, flow_scale=0.5):
         batch, h, w, c = images.shape
         out_list = []
         
         images_np = (images.cpu().numpy() * 255).astype(np.uint8)
         
+        # Optimization: Calculate flow on smaller image
+        flow_h, flow_w = int(h * flow_scale), int(w * flow_scale)
+        
         prev_gray = cv2.cvtColor(images_np[0], cv2.COLOR_RGB2GRAY)
+        prev_small = cv2.resize(prev_gray, (flow_w, flow_h), interpolation=cv2.INTER_LINEAR)
         
         for i in range(batch - 1):
             frame1 = images_np[i]
@@ -37,9 +42,19 @@ class InternodeOpticalFlowInterpolator:
             out_list.append(frame1) # Add original
             
             next_gray = cv2.cvtColor(frame2, cv2.COLOR_RGB2GRAY)
+            next_small = cv2.resize(next_gray, (flow_w, flow_h), interpolation=cv2.INTER_LINEAR)
             
-            # Calculate Flow
-            flow = cv2.calcOpticalFlowFarneback(prev_gray, next_gray, None, 0.5, 3, 15, 3, 5, 1.2, 0)
+            # Calculate Flow on Proxy
+            flow_small = cv2.calcOpticalFlowFarneback(prev_small, next_small, None, 0.5, 3, 15, 3, 5, 1.2, 0)
+            
+            # Upscale Flow
+            if flow_scale != 1.0:
+                # Resize flow field to full res
+                flow = cv2.resize(flow_small, (w, h), interpolation=cv2.INTER_LINEAR)
+                # Adjust flow magnitude
+                flow *= (1.0 / flow_scale)
+            else:
+                flow = flow_small
             
             # Generate intermediate frames
             for j in range(1, multiplier):
@@ -56,12 +71,11 @@ class InternodeOpticalFlowInterpolator:
                 warped = cv2.remap(frame1, map_x, map_y, cv2.INTER_LINEAR)
                 
                 # Simple blend with frame 2 to hide artifacts
-                # (A true RIFE would predict the middle, here we warp A towards B and blend B)
                 interpolated = cv2.addWeighted(warped, 1.0 - alpha, frame2, alpha, 0)
                 
                 out_list.append(interpolated)
             
-            prev_gray = next_gray
+            prev_small = next_small
             
         out_list.append(images_np[-1]) # Add last
         
@@ -91,11 +105,22 @@ class InternodeMotionGlitch:
         
         prev_gray = cv2.cvtColor(images_np[0], cv2.COLOR_RGB2GRAY)
         
+        # Optimization: Glitch doesn't need high precision flow
+        # Force low res flow for speed
+        glitch_scale = 0.25
+        sh, sw = int(h * glitch_scale), int(w * glitch_scale)
+        prev_small = cv2.resize(prev_gray, (sw, sh))
+
         for i in range(1, batch):
             curr = images_np[i]
             curr_gray = cv2.cvtColor(curr, cv2.COLOR_RGB2GRAY)
+            curr_small = cv2.resize(curr_gray, (sw, sh))
             
-            flow = cv2.calcOpticalFlowFarneback(prev_gray, curr_gray, None, 0.5, 3, 15, 3, 5, 1.2, 0)
+            flow_small = cv2.calcOpticalFlowFarneback(prev_small, curr_small, None, 0.5, 3, 15, 3, 5, 1.2, 0)
+            
+            # Upscale just for mask generation
+            flow = cv2.resize(flow_small, (w, h), interpolation=cv2.INTER_NEAREST) * (1/glitch_scale)
+            
             mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
             
             # Create mask where motion is high
@@ -107,8 +132,6 @@ class InternodeMotionGlitch:
                 dx = (flow[..., 0] * intensity).astype(np.int32)
                 dy = (flow[..., 1] * intensity).astype(np.int32)
                 
-                # Manual pixel shuffle based on flow (Datamosh style)
-                # This is slow in pure python, so we use remap
                 h_map, w_map = np.meshgrid(np.arange(h), np.arange(w), indexing='ij')
                 
                 # Add noise/jitter to maps based on flow intensity
@@ -120,7 +143,7 @@ class InternodeMotionGlitch:
             else:
                 out_list.append(curr)
                 
-            prev_gray = curr_gray
+            prev_small = curr_small
             
         out_tensor = torch.from_numpy(np.array(out_list)).float() / 255.0
         return (out_tensor,)

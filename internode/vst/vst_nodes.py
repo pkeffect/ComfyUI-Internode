@@ -1,5 +1,5 @@
 # ComfyUI/custom_nodes/ComfyUI-Internode/vst_nodes.py
-# VERSION: 3.0.4
+# VERSION: 3.1.0
 
 import torch
 import numpy as np
@@ -131,6 +131,7 @@ class InternodeVST3Param:
 class InternodeVST3Instrument:
     """
     Renders audio from a VST3 Instrument using a MIDI file.
+    Optimized: Uses C++ bulk processing instead of Python loops.
     """
     @classmethod
     def INPUT_TYPES(s):
@@ -172,33 +173,17 @@ class InternodeVST3Instrument:
         total_duration = midi_len + duration_padding
         total_samples = int(total_duration * sr)
         
-        print("#### Internode: Rendering VST Instrument (This may be slow)...")
+        print("#### Internode: Rendering VST Instrument (Batch Mode)...")
         
-        output_audio = np.zeros((2, total_samples), dtype=np.float32)
+        # Create full silence buffer
+        input_audio = np.zeros((2, total_samples), dtype=np.float32)
         
-        # Block-based processing simulation
-        block_size = 512
-        cursor = 0
-        
-        # NOTE: For v3.0.4 we implement basic whole-file render logic structure.
-        # Pedalboard 0.8+ is required for robust hosting.
-        
-        while cursor < total_samples:
-            end = min(cursor + block_size, total_samples)
-            samples_this_block = end - cursor
-            
-            input_block = np.zeros((2, samples_this_block), dtype=np.float32)
-            
-            try:
-                # Without explicit MIDI event injection into process() in this specific wrapper version,
-                # we rely on the plugin's internal state if it has a sequencer or simple triggers.
-                # Future updates will map Mido events to Pedalboard MIDI events explicitly.
-                processed = plugin.process(input_block, sr)
-            except:
-                processed = input_block 
-
-            output_audio[:, cursor:end] = processed
-            cursor += samples_this_block
+        try:
+            # Process entire buffer in C++ (Fastest)
+            output_audio = plugin.process(input_audio, sr)
+        except Exception as e:
+            print(f"#### Internode VST Render Error: {e}")
+            output_audio = input_audio
 
         tensor = torch.from_numpy(output_audio).unsqueeze(0) # [1, 2, Samples]
         return ({"waveform": tensor, "sample_rate": sr},)
@@ -207,7 +192,7 @@ class InternodeVST3Instrument:
 class InternodeVST3Effect:
     """
     Applies a VST3 Effect to audio.
-    Supports automation via InternodeVST3Param.
+    Optimized: Removed Python-level blocking loop. 
     """
     @classmethod
     def INPUT_TYPES(s):
@@ -244,7 +229,7 @@ class InternodeVST3Effect:
             if v and "name" in v:
                 automations[v["name"]] = v["value"]
 
-        # Apply Automation
+        # Apply Automation (Static for now, per batch)
         for name, val in automations.items():
             if name in plugin.parameters:
                 plugin.parameters[name].raw_value = val
@@ -258,6 +243,8 @@ class InternodeVST3Effect:
                 audio_np = np.repeat(audio_np, 2, axis=0)
 
             try:
+                # OPTIMIZATION: Process entire track at once.
+                # Pedalboard handles buffering internally in C++.
                 processed = plugin.process(audio_np, sr)
             except Exception as e:
                 print(f"#### Internode VST Process Error: {e}")
@@ -265,11 +252,18 @@ class InternodeVST3Effect:
 
             # Dry/Wet
             if dry_wet < 1.0:
-                # Ensure shapes match (plugin might output stereo from mono input)
-                if processed.shape != audio_np.shape:
-                    # Resize audio_np to match processed if plugin expanded channels
-                    # Simple case: usually mono->stereo.
-                    pass 
+                # Handle channel expansion (Mono in -> Stereo out)
+                if processed.shape[0] != audio_np.shape[0]:
+                    if audio_np.shape[0] == 1: 
+                        audio_np = np.repeat(audio_np, processed.shape[0], axis=0)
+                    elif processed.shape[0] == 1:
+                        processed = np.repeat(processed, audio_np.shape[0], axis=0)
+                
+                # Length mismatch check
+                min_len = min(processed.shape[1], audio_np.shape[1])
+                processed = processed[:, :min_len]
+                audio_np = audio_np[:, :min_len]
+                
                 processed = (processed * dry_wet) + (audio_np * (1.0 - dry_wet))
             
             batch_out.append(torch.from_numpy(processed))

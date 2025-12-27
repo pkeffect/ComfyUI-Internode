@@ -1,10 +1,10 @@
 // ComfyUI/custom_nodes/ComfyUI-Internode/js/internode_asset_browser.js
-// VERSION: 3.1.0
+// VERSION: 3.4.0 (Lazy Loading Fix)
 
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 
-console.log("%c#### Internode: Asset Browser Loaded", "color: cyan; font-weight: bold;");
+console.log("%c#### Internode: Asset Browser Loaded (Lazy)", "color: cyan; font-weight: bold;");
 
 app.registerExtension({
     name: "Internode.AssetBrowser",
@@ -20,8 +20,10 @@ app.registerExtension({
                 if (!fileWidget) return r;
 
                 // Get list of files from the widget options (Comfy populates this)
-                // Note: ComfyUI populates 'options.values' for COMBO widgets
                 let fileList = fileWidget.options.values || [];
+                let filteredList = [...fileList]; // Current filtered view
+                let renderedCount = 0;
+                const BATCH_SIZE = 50;
                 
                 // Hide default widget
                 fileWidget.type = "custom";
@@ -56,19 +58,20 @@ app.registerExtension({
                     gap: "2px", padding: "2px",
                     alignContent: "start"
                 });
+                
+                // Sentinel element for infinite scroll
+                const sentinel = document.createElement("div");
+                sentinel.style.height = "20px";
+                sentinel.style.gridColumn = "1 / -1"; 
 
-                // 5. Render Function
-                const renderGrid = (filterText = "") => {
-                    grid.innerHTML = "";
-                    const lowerFilter = filterText.toLowerCase();
+                // Function to render a batch
+                const renderBatch = () => {
+                    const fragment = document.createDocumentFragment();
+                    const nextBatch = filteredList.slice(renderedCount, renderedCount + BATCH_SIZE);
                     
-                    // Filter files
-                    const matches = fileList.filter(f => f.toLowerCase().includes(lowerFilter));
-                    
-                    // Limit rendering for performance if list is huge (e.g., show first 100 matches)
-                    const displayList = matches.slice(0, 100);
+                    if (nextBatch.length === 0) return false; // No more items
 
-                    displayList.forEach(filename => {
+                    nextBatch.forEach(filename => {
                         const item = document.createElement("div");
                         Object.assign(item.style, {
                             aspectRatio: "1/1", cursor: "pointer",
@@ -76,34 +79,29 @@ app.registerExtension({
                             border: filename === fileWidget.value ? "2px solid #0f0" : "1px solid #333"
                         });
                         
-                        // Construct Thumbnail URL
-                        // Use ComfyUI view API. For images it works. For video it might just show icon or first frame depending on server.
                         const url = api.apiURL(`/view?filename=${encodeURIComponent(filename)}&type=input`);
-                        
-                        // Check extension for icon vs image
                         const ext = filename.split('.').pop().toLowerCase();
                         const isVid = ['mp4', 'mov', 'avi', 'webm'].includes(ext);
                         
+                        // Use CSS Background for performance vs creating img tags initially
+                        // Actually img tag with loading="lazy" is good, but intersection observer controls insertion here.
                         const img = document.createElement("img");
                         img.src = url;
+                        img.loading = "lazy";
                         Object.assign(img.style, {
                             width: "100%", height: "100%", objectFit: "cover",
                             opacity: "0.8", transition: "opacity 0.2s"
                         });
                         
-                        // Hover effect
                         item.onmouseenter = () => img.style.opacity = "1.0";
                         item.onmouseleave = () => img.style.opacity = "0.8";
                         
-                        // Selection
                         item.onclick = () => {
                             fileWidget.value = filename;
-                            // Update visual selection
                             Array.from(grid.children).forEach(c => c.style.border = "1px solid #333");
                             item.style.border = "2px solid #0f0";
                         };
 
-                        // Label
                         const lbl = document.createElement("div");
                         lbl.textContent = filename;
                         Object.assign(lbl.style, {
@@ -114,7 +112,6 @@ app.registerExtension({
                             pointerEvents: "none"
                         });
 
-                        // Video Badge
                         if (isVid) {
                             const badge = document.createElement("div");
                             badge.textContent = "▶";
@@ -128,11 +125,36 @@ app.registerExtension({
 
                         item.appendChild(img);
                         item.appendChild(lbl);
-                        grid.appendChild(item);
+                        fragment.appendChild(item);
                     });
                     
-                    if (matches.length === 0) {
+                    // Insert before sentinel
+                    grid.insertBefore(fragment, sentinel);
+                    renderedCount += nextBatch.length;
+                    return true;
+                };
+
+                // Initialize Infinite Scroll Observer
+                const observer = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting) {
+                        renderBatch();
+                    }
+                }, { root: grid, rootMargin: "200px" });
+
+                // 5. Main Render Function (Reset)
+                const resetGrid = (filterText = "") => {
+                    grid.innerHTML = "";
+                    renderedCount = 0;
+                    grid.appendChild(sentinel); // Add sentinel back
+                    
+                    const lowerFilter = filterText.toLowerCase();
+                    filteredList = fileList.filter(f => f.toLowerCase().includes(lowerFilter));
+                    
+                    if (filteredList.length === 0) {
                         grid.innerHTML = "<div style='color:#666; padding:10px; font-size:11px;'>No matches found</div>";
+                    } else {
+                        renderBatch(); // Load first batch
+                        observer.observe(sentinel);
                     }
                 };
 
@@ -141,15 +163,13 @@ app.registerExtension({
                 container.appendChild(grid);
                 
                 // Event Listeners
-                searchBar.addEventListener("input", (e) => renderGrid(e.target.value));
-                searchBar.addEventListener("mousedown", (e) => e.stopPropagation()); // Prevent node dragging
+                searchBar.addEventListener("input", (e) => resetGrid(e.target.value));
+                searchBar.addEventListener("mousedown", (e) => e.stopPropagation()); 
                 
                 // Initial Render
-                renderGrid();
+                resetGrid();
 
                 this.addDOMWidget("asset_browser", "div", container, { serialize: false });
-                
-                // Size
                 this.setSize([300, 400]);
                 
                 return r;

@@ -1,12 +1,12 @@
 # ComfyUI/custom_nodes/ComfyUI-Internode/__init__.py
-# VERSION: 3.4.0
+# VERSION: 3.5.0
 
 import importlib.util
 import importlib.metadata
 import os
 import sys
 
-print("#### Internode: Initializing Node Pack VERSION 3.4.0...")
+print("#### Internode: Initializing Node Pack VERSION 3.5.0...")
 
 # --- Main Registry ---
 NODE_CLASS_MAPPINGS = {}
@@ -133,7 +133,7 @@ except Exception as e:
     print(f"#### Internode Error (DSP): {e}")
 
 # ==============================================================================
-# 6. VST3 HOSTING
+# 6. VST3 & STUDIO INSTRUMENTS
 # ==============================================================================
 try:
     from .internode.vst.vst_nodes import (
@@ -141,7 +141,10 @@ try:
         InternodeVST3Param, InternodeVST3Info, InternodeVSTLoader
     )
     from .internode.vst.studio_surface import InternodeStudioSurface
+    
+    # REMOVED: from .internode.vst.studio_nodes import ...
 
+    # Existing VST Mappings
     NODE_CLASS_MAPPINGS["InternodeStudioSurface"] = InternodeStudioSurface
     NODE_CLASS_MAPPINGS["InternodeVST3Effect"] = InternodeVST3Effect
     NODE_CLASS_MAPPINGS["InternodeVST3Instrument"] = InternodeVST3Instrument
@@ -150,6 +153,10 @@ try:
     NODE_CLASS_MAPPINGS["InternodeVST3Info"] = InternodeVST3Info
     NODE_CLASS_MAPPINGS["InternodeVSTLoader"] = InternodeVSTLoader
     
+    # REMOVED: NODE_CLASS_MAPPINGS["InternodeDrumMachine"] ...
+    # REMOVED: NODE_CLASS_MAPPINGS["InternodeSampler"] ...
+    
+    # Display Names
     NODE_DISPLAY_NAME_MAPPINGS["InternodeStudioSurface"] = "Internode Studio Surface (UI)"
     NODE_DISPLAY_NAME_MAPPINGS["InternodeVST3Effect"] = "VST3 Effect Processor (Internode)"
     NODE_DISPLAY_NAME_MAPPINGS["InternodeVST3Instrument"] = "VST3 Instrument (MIDI) (Internode)"
@@ -157,8 +164,12 @@ try:
     NODE_DISPLAY_NAME_MAPPINGS["InternodeVST3Param"] = "VST3 Parameter Automation (Internode)"
     NODE_DISPLAY_NAME_MAPPINGS["InternodeVST3Info"] = "VST3 Info & Param List (Internode)"
     NODE_DISPLAY_NAME_MAPPINGS["InternodeVSTLoader"] = "VST3 Loader (Legacy) (Internode)"
+    
+    # REMOVED: NODE_DISPLAY_NAME_MAPPINGS["InternodeDrumMachine"] ...
+    # REMOVED: NODE_DISPLAY_NAME_MAPPINGS["InternodeSampler"] ...
+
 except Exception as e:
-    print(f"#### Internode Error (VST): {e}")
+    print(f"#### Internode Error (Studio/VST): {e}")
 
 # ==============================================================================
 # 7. AUDIO ANALYSIS
