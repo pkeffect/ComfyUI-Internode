@@ -1,5 +1,5 @@
 # ComfyUI/custom_nodes/ComfyUI-Internode/__init__.py
-# VERSION: 3.0.9
+# VERSION: 3.2.1
 
 import importlib.util
 import importlib.metadata
@@ -8,12 +8,7 @@ import sys
 import subprocess
 import re
 
-print("#### Internode: Initializing Node Pack VERSION 3.0.9...")
-
-# ... [Dependency Management Block remains identical to previous] ...
-# (Assuming dependency check code is here)
-
-# --- Node Registration ---
+print("#### Internode: Initializing Node Pack VERSION 3.2.1...")
 
 NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}
@@ -39,17 +34,17 @@ try:
     from .internode.utils.markdown_node import InternodeMarkdownNote
     from .internode.utils.sticky_note import InternodeStickyNote
     from .internode.utils.asset_browser import InternodeAssetBrowser
-    from .internode.utils.metadata_inspector import InternodeMetadataInspector # NEW
+    from .internode.utils.metadata_inspector import InternodeMetadataInspector
     
     NODE_CLASS_MAPPINGS["InternodeMarkdownNote"] = InternodeMarkdownNote
     NODE_CLASS_MAPPINGS["InternodeStickyNote"] = InternodeStickyNote
     NODE_CLASS_MAPPINGS["InternodeAssetBrowser"] = InternodeAssetBrowser
-    NODE_CLASS_MAPPINGS["InternodeMetadataInspector"] = InternodeMetadataInspector # NEW
+    NODE_CLASS_MAPPINGS["InternodeMetadataInspector"] = InternodeMetadataInspector
     
     NODE_DISPLAY_NAME_MAPPINGS["InternodeMarkdownNote"] = "Markdown Note (Internode)"
     NODE_DISPLAY_NAME_MAPPINGS["InternodeStickyNote"] = "Sticky Note (Internode)"
     NODE_DISPLAY_NAME_MAPPINGS["InternodeAssetBrowser"] = "Asset Browser (Internode)"
-    NODE_DISPLAY_NAME_MAPPINGS["InternodeMetadataInspector"] = "Metadata Inspector (Internode)" # NEW
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeMetadataInspector"] = "Metadata Inspector (Internode)"
 except Exception as e:
     print(f"#### Internode Error (Utils): {e}")
 
@@ -77,7 +72,7 @@ try:
         InternodeVST3Effect, InternodeVST3Instrument, InternodeMidiLoader,
         InternodeVST3Param, InternodeVST3Info, InternodeVSTLoader
     )
-    from .internode.vst.studio_surface import InternodeStudioSurface # New import
+    from .internode.vst.studio_surface import InternodeStudioSurface
 
     NODE_CLASS_MAPPINGS["InternodeStudioSurface"] = InternodeStudioSurface
     NODE_DISPLAY_NAME_MAPPINGS["InternodeStudioSurface"] = "Internode Studio Surface (UI)"
@@ -130,15 +125,35 @@ except Exception as e:
 # 7. Video FX
 try:
     from .internode.video_fx.universal_player import InternodeUniversalPlayer
-    from .internode.video_fx.ab_comparator import InternodeABComparator # NEW
+    from .internode.video_fx.ab_comparator import InternodeABComparator
+    from .internode.video_fx.post_production_nodes import (
+        InternodeColorGrade, InternodeFilmGrain, InternodeGlitch, InternodeSpeedRamp
+    )
     
     NODE_CLASS_MAPPINGS["InternodeUniversalPlayer"] = InternodeUniversalPlayer
     NODE_CLASS_MAPPINGS["InternodeABComparator"] = InternodeABComparator
+    NODE_CLASS_MAPPINGS["InternodeColorGrade"] = InternodeColorGrade
+    NODE_CLASS_MAPPINGS["InternodeFilmGrain"] = InternodeFilmGrain
+    NODE_CLASS_MAPPINGS["InternodeGlitch"] = InternodeGlitch
+    NODE_CLASS_MAPPINGS["InternodeSpeedRamp"] = InternodeSpeedRamp
     
     NODE_DISPLAY_NAME_MAPPINGS["InternodeUniversalPlayer"] = "Universal Media Player (Internode)"
-    NODE_DISPLAY_NAME_MAPPINGS["InternodeABComparator"] = "A/B Comparator (Internode)" # NEW
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeABComparator"] = "A/B Comparator (Internode)"
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeColorGrade"] = "Color Grade 3-Way (Internode)"
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeFilmGrain"] = "Film Grain / Overlay (Internode)"
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeGlitch"] = "Datamosh / Glitch (Internode)"
+    NODE_DISPLAY_NAME_MAPPINGS["InternodeSpeedRamp"] = "Frame Speed Ramp (Internode)"
 except Exception as e:
     print(f"#### Internode Error (VideoFX): {e}")
+
+# 8. Control & Logic
+try:
+    from .internode.control.control_nodes import NODE_CLASS_MAPPINGS as CONTROL, NODE_DISPLAY_NAME_MAPPINGS as CONTROL_N
+    NODE_CLASS_MAPPINGS.update(CONTROL)
+    NODE_DISPLAY_NAME_MAPPINGS.update(CONTROL_N)
+except Exception as e:
+    print(f"#### Internode Error (Control): {e}")
+
 
 WEB_DIRECTORY = "./js"
 

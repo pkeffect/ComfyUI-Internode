@@ -1,5 +1,5 @@
 # Generated Structure
-# Files: 42 | Dirs: 9
+# Files: 46 | Dirs: 10
 
 ComfyUI-Internode/
 ├── AUDIT.md
@@ -8,12 +8,16 @@ ComfyUI-Internode/
 ├── README.md
 ├── __init__.py
 ├── comfyui.json
+├── directory-structure.txt
 ├── install.py
 ├── internode/
 │   ├── __init__.py
 │   ├── analysis/
 │   │   ├── __init__.py
 │   │   └── analysis_nodes.py
+│   ├── control/
+│   │   ├── __init__.py
+│   │   └── control_nodes.py
 │   ├── dsp/
 │   │   ├── __init__.py
 │   │   ├── audio_tools_nodes.py
@@ -35,6 +39,7 @@ ComfyUI-Internode/
 │   ├── video_fx/
 │   │   ├── __init__.py
 │   │   ├── ab_comparator.py
+│   │   ├── post_production_nodes.py
 │   │   └── universal_player.py
 │   └── vst/
 │       ├── __init__.py
