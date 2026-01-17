@@ -1,6 +1,10 @@
 # ComfyUI-Internode
 
+<<<<<<< HEAD
 ![Version](https://img.shields.io/badge/Version-3.6.0-green?style=for-the-badge) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20MacOS-blue?style=for-the-badge) ![License](https://img.shields.io/badge/License-MIT-orange?style=for-the-badge) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge) ![Nodes 2.0](https://img.shields.io/badge/Nodes%202.0-Compatible-brightgreen?style=for-the-badge)
+=======
+![Version](https://img.shields.io/badge/Version-3.5.0-green?style=for-the-badge) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20MacOS-blue?style=for-the-badge) ![License](https://img.shields.io/badge/License-MIT-orange?style=for-the-badge) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge)
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
 
 ![Internode ComfyUI Custom Nodes](./images/screenshot.png)
 
@@ -9,8 +13,11 @@
 While standard audio nodes in ComfyUI typically offer simple playback or basic saving capabilities, Internode provides a complete signal processing pipeline. It integrates high-fidelity DSP mixing, VST3 plugin hosting, native AI music generation (ACE-Step), spectral editing, advanced LLM integration via OpenWebUI, and a suite of Video FX tools for content creation.
 
 This suite is engineered for power users who require precise control over audio signal chains, creating a complete **"Studio inside ComfyUI."**
+<<<<<<< HEAD
 
 > **✨ New in v3.6.0:** Full compatibility with **ComfyUI Nodes 2.0**! All custom UI nodes (Mixer, Studio Surface, Sticky Notes, Markdown) now render cleanly in the new node system without widget clutter. See [DEVELOPER_NOTES.md](DEVELOPER_NOTES.md) for technical implementation details.
+=======
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
 
 ---
 
@@ -20,7 +27,10 @@ This suite is engineered for power users who require precise control over audio 
     *   [Cloning the Repository](#1-cloning-the-repository)
     *   [Dependency Management](#2-dependency-management)
     *   [System Prerequisites (FFmpeg & VSTs)](#3-system-prerequisites)
+<<<<<<< HEAD
     *   [ComfyUI Nodes 2.0 Compatibility](#4-comfyui-nodes-20-compatibility)
+=======
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
 2.  [🏗️ System Architecture](#-system-architecture)
     *   [The Dual-Engine Concept](#the-dual-engine-concept)
     *   [Data Flow](#data-flow)
@@ -125,6 +135,7 @@ To utilize the VST Host capabilities, you must have **64-bit VST3** plugins inst
 
 > **Note:** VST2 (`.dll`) plugins are **not supported**. 32-bit plugins are **not supported**.
 
+<<<<<<< HEAD
 ### 4. ComfyUI Nodes 2.0 Compatibility
 
 **Internode v3.6.0 is fully compatible with both ComfyUI Nodes 1.0 and 2.0 rendering systems.**
@@ -137,6 +148,8 @@ ComfyUI Nodes 2.0 introduced a new widget rendering architecture that fundamenta
 
 **For Developers:** If you're extending Internode or building custom UI nodes, see the comprehensive [Nodes 2.0 Compatibility Guide](DEVELOPER_NOTES.md#comfyui-nodes-10-vs-20-compatibility-guide) in DEVELOPER_NOTES.md for implementation patterns and best practices.
 
+=======
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
 ---
 
 ## 🏗️ System Architecture

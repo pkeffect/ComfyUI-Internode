@@ -88,9 +88,15 @@ app.registerExtension({
             const onConfigure = nodeType.prototype.onConfigure;
             nodeType.prototype.onConfigure = function() {
                 if (onConfigure) onConfigure.apply(this, arguments);
+<<<<<<< HEAD
                 const textWidget = this._stickyGetWidget ? this._stickyGetWidget("text") : this.widgets?.find(w => w.name === "text");
                 const colorWidget = this._stickyGetWidget ? this._stickyGetWidget("note_color") : this.widgets?.find(w => w.name === "note_color");
                 const fontWidget = this._stickyGetWidget ? this._stickyGetWidget("text_color") : this.widgets?.find(w => w.name === "text_color");
+=======
+                const textWidget = this.widgets?.find(w => w.name === "text");
+                const colorWidget = this.widgets?.find(w => w.name === "note_color");
+                const fontWidget = this.widgets?.find(w => w.name === "text_color");
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
 
                 if (this.sticky_ui) {
                     if (textWidget) this.sticky_ui.textarea.value = textWidget.value;
@@ -107,6 +113,7 @@ app.registerExtension({
             nodeType.prototype.onNodeCreated = function () {
                 const r = onNodeCreated ? onNodeCreated.apply(this, arguments) : undefined;
 
+<<<<<<< HEAD
                 // Store original widgets for Nodes 2.0 compatibility
                 if (!this._stickyOriginalWidgets) {
                     this._stickyOriginalWidgets = this.widgets ? [...this.widgets] : [];
@@ -144,6 +151,21 @@ app.registerExtension({
                 const textWidget = this._stickyOriginalWidgets.find(w => w.name === "text");
                 const noteColorWidget = this._stickyOriginalWidgets.find(w => w.name === "note_color");
                 const textColorWidget = this._stickyOriginalWidgets.find(w => w.name === "text_color");
+=======
+                // Helper to hide but keep widgets
+                const hideWidget = (name) => {
+                    const w = this.widgets.find(wid => wid.name === name);
+                    if (w) {
+                        w.computeSize = () => [0, 0];
+                        w.draw = function() { return; };
+                    }
+                    return w;
+                };
+
+                const textWidget = hideWidget("text");
+                const noteColorWidget = hideWidget("note_color");
+                const textColorWidget = hideWidget("text_color");
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
 
                 // 1. Root Container
                 const root = document.createElement("div");
@@ -268,11 +290,15 @@ app.registerExtension({
                 root.appendChild(toolbar);
                 root.appendChild(contentArea);
 
+<<<<<<< HEAD
                 const domWidget = this.addDOMWidget("sticky_ui", "div", root, { serialize: false });
                 domWidget.computedHeight = 220;
                 
                 hideWidgets();
                 this.stickyHideWidgets = hideWidgets;
+=======
+                this.addDOMWidget("sticky_ui", "div", root, { serialize: false });
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
                 
                 // Expose methods for onConfigure
                 this.sticky_ui = {
@@ -282,6 +308,7 @@ app.registerExtension({
                 };
 
                 this.setSize([220, 220]);
+<<<<<<< HEAD
                 this.resizable = true;
                 
                 // Override computeSize
@@ -313,6 +340,8 @@ app.registerExtension({
                     }
                 };
                 
+=======
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
                 return r;
             };
         }

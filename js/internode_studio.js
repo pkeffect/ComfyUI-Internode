@@ -159,14 +159,22 @@ class StudioInstance {
             bot: { octave: 0, wave: '1', cutoff: 20000, res: 0, vol: 0.7 }
         };
 
+<<<<<<< HEAD
         if(widget?.value && widget.value !== "{}") {
+=======
+        if(widget && widget.value && widget.value !== "{}") {
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
             try {
                 const saved = JSON.parse(widget.value);
                 Object.assign(this.sys.top, saved.top);
                 Object.assign(this.sys.bot, saved.bot);
+<<<<<<< HEAD
             } catch(e) {
                 console.warn("Failed to parse state:", e);
             }
+=======
+            } catch(e) {}
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
         }
 
         this.init();
@@ -377,7 +385,11 @@ class StudioInstance {
     }
 
     async initAudio() {
+<<<<<<< HEAD
         this.ctx = new (globalThis.AudioContext || globalThis.webkitAudioContext)();
+=======
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
         if(this.ctx.state === 'suspended') await this.ctx.resume();
         
         // Master Chain
@@ -415,7 +427,11 @@ class StudioInstance {
         const freq = 440 * Math.pow(2, (midi - 69) / 12);
         const osc = this.ctx.createOscillator();
         const types = ['sawtooth', 'square', 'triangle', 'sine'];
+<<<<<<< HEAD
         osc.type = types[Number.parseInt(this.sys[deck].wave)];
+=======
+        osc.type = types[parseInt(this.sys[deck].wave)];
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
         osc.frequency.value = freq;
         
         const env = this.ctx.createGain();
@@ -451,11 +467,19 @@ class StudioInstance {
         // Knobs Logic
         this.root.querySelectorAll('.knob').forEach(k => {
             let val = 0.5;
+<<<<<<< HEAD
             if(k.dataset.param === 'cutoff') val = 1;
             k.style.transform = `rotate(${(val*270)-135}deg)`;
             k.onmousedown = (e) => {
                 const sy = e.clientY;
                 const startDeg = Number.parseFloat(k.style.transform.replaceAll(/[^\d.-]/g,''))||-135;
+=======
+            if(k.dataset.param === 'cutoff') val = 1.0;
+            k.style.transform = `rotate(${(val*270)-135}deg)`;
+            k.onmousedown = (e) => {
+                const sy = e.clientY;
+                const startDeg = parseFloat(k.style.transform.replace(/[^\d.-]/g,''))||-135;
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
                 const move = (ev) => {
                     let d = startDeg + (sy - ev.clientY)*2.5;
                     d = Math.max(-135, Math.min(135, d));
@@ -593,6 +617,7 @@ app.registerExtension({
                 
                 injectStyles();
                 
+<<<<<<< HEAD
                 // Store original widgets for Nodes 2.0 compatibility
                 if (!this._studioOriginalWidgets) {
                     this._studioOriginalWidgets = this.widgets ? [...this.widgets] : [];
@@ -628,12 +653,17 @@ app.registerExtension({
                 }
                 
                 const widget = this._studioOriginalWidgets.find(w => w.name === "ui_state");
+=======
+                const widget = this.widgets.find(w => w.name === "ui_state");
+                if (widget) { widget.type = "custom"; widget.computeSize = () => [0, -4]; }
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
 
                 const container = document.createElement("div");
                 container.className = "internode-studio-root";
                 
                 new StudioInstance(container, widget);
                 
+<<<<<<< HEAD
                 const domWidget = this.addDOMWidget("studio_ui", "div", container, { serialize: false });
                 domWidget.computedHeight = 600;
                 
@@ -672,6 +702,10 @@ app.registerExtension({
                     }
                 };
                 
+=======
+                this.addDOMWidget("studio_ui", "div", container, { serialize: false });
+                this.setSize([900, 600]); 
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
                 return r;
             };
         }

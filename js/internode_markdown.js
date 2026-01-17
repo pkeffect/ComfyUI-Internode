@@ -196,7 +196,11 @@ app.registerExtension({
             nodeType.prototype.onConfigure = function() {
                 if (onConfigure) onConfigure.apply(this, arguments);
                 
+<<<<<<< HEAD
                 const textWidget = this._markdownGetWidget ? this._markdownGetWidget("text") : this.widgets?.find(w => w.name === "text");
+=======
+                const textWidget = this.widgets?.find(w => w.name === "text");
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
                 if (textWidget && this.markdown_textarea) {
                     // Force the widget value (loaded from JSON) into the UI
                     this.markdown_textarea.value = textWidget.value;
@@ -210,9 +214,16 @@ app.registerExtension({
             nodeType.prototype.onNodeCreated = function () {
                 const r = onNodeCreated ? onNodeCreated.apply(this, arguments) : undefined;
 
+<<<<<<< HEAD
                 // Store original widgets for Nodes 2.0 compatibility
                 if (!this._markdownOriginalWidgets) {
                     this._markdownOriginalWidgets = this.widgets ? [...this.widgets] : [];
+=======
+                const textWidget = this.widgets.find(w => w.name === "text");
+                if (textWidget) {
+                    textWidget.computeSize = () => [0, 0];
+                    textWidget.draw = function() { return; }; 
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
                 }
                 
                 const hideWidgets = () => {

@@ -561,10 +561,19 @@ function refreshUI(container) {
 function buildMixerUI(node, channelCount) {
     const engine = new MixerAudioEngine(channelCount);
     
+<<<<<<< HEAD
     // Store original widgets for functionality but remove from rendering
     // This is the key fix for Nodes 2.0 - hidden widgets still render unless removed from array
     if (!node._internodeOriginalWidgets) {
         node._internodeOriginalWidgets = node.widgets ? [...node.widgets] : [];
+=======
+    // UI HIDING FIX: Iterate all widgets and hide them from the view
+    // so they don't clutter the node, but keep them for logic.
+    if (node.widgets) {
+        node.widgets.forEach(w => {
+            w.computeSize = () => [0, -4];
+        });
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
     }
     
     const hideWidgets = () => {
@@ -623,6 +632,7 @@ function buildMixerUI(node, channelCount) {
     // ROOT CONTAINER (Holds Scrollable Mixer + Footer)
     const root = document.createElement("div");
     Object.assign(root.style, {
+<<<<<<< HEAD
         position: "relative",
         width: "100%",
         display: "flex", 
@@ -631,6 +641,12 @@ function buildMixerUI(node, channelCount) {
         borderRadius: "6px",
         overflow: "hidden",
         boxSizing: "border-box"
+=======
+        width: "100%", height: "100%",
+        display: "flex", flexDirection: "column",
+        backgroundColor: "#111", borderRadius: "6px",
+        overflow: "hidden"
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
     });
 
     // SCROLLABLE MIXER AREA (This mimics the old 'container' behavior)
@@ -778,6 +794,7 @@ function buildMixerUI(node, channelCount) {
     root.appendChild(container);
     root.appendChild(footer);
 
+<<<<<<< HEAD
     // Add DOM widget with fixed height
     const domWidget = node.addDOMWidget("mixer_ui", "div", root, { serialize: false });
     
@@ -787,12 +804,20 @@ function buildMixerUI(node, channelCount) {
     // Ensure root fills the DOM widget's allocated space
     root.style.minHeight = "700px";
     root.style.height = "700px";
+=======
+    node.addDOMWidget("mixer_ui", "div", root, { serialize: false });
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
     
     // Resize node to fit custom UI
+    // Width calc based on channel count + master strip
     const width = (channelCount * 54) + 70; 
+<<<<<<< HEAD
     node.setSize([width, 700]);
     node.resizable = true;
  
+=======
+    node.setSize([width, 700]); 
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
 }
 
 app.registerExtension({
