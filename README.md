@@ -1,4 +1,4 @@
-# ComfyUI-Internode
+# ComfyUI Internode Custom Nodes Suite
 
 
 ![Version](https://img.shields.io/badge/Version-3.6.0-green?style=for-the-badge) ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20MacOS-blue?style=for-the-badge) ![License](https://img.shields.io/badge/License-MIT-orange?style=for-the-badge) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge) ![Nodes 2.0](https://img.shields.io/badge/Nodes%202.0-Compatible-brightgreen?style=for-the-badge)
