@@ -1,12 +1,20 @@
 # ComfyUI/custom_nodes/ComfyUI-Internode/__init__.py
+<<<<<<< HEAD
+# VERSION: 3.6.0
+=======
 # VERSION: 3.5.0
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
 
 import importlib.util
 import importlib.metadata
 import os
 import sys
 
+<<<<<<< HEAD
+print("#### Internode: Initializing Node Pack VERSION 3.6.0...")
+=======
 print("#### Internode: Initializing Node Pack VERSION 3.5.0...")
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
 
 # --- Main Registry ---
 NODE_CLASS_MAPPINGS = {}

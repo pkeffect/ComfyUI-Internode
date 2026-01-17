@@ -88,9 +88,15 @@ app.registerExtension({
             const onConfigure = nodeType.prototype.onConfigure;
             nodeType.prototype.onConfigure = function() {
                 if (onConfigure) onConfigure.apply(this, arguments);
+<<<<<<< HEAD
+                const textWidget = this._stickyGetWidget ? this._stickyGetWidget("text") : this.widgets?.find(w => w.name === "text");
+                const colorWidget = this._stickyGetWidget ? this._stickyGetWidget("note_color") : this.widgets?.find(w => w.name === "note_color");
+                const fontWidget = this._stickyGetWidget ? this._stickyGetWidget("text_color") : this.widgets?.find(w => w.name === "text_color");
+=======
                 const textWidget = this.widgets?.find(w => w.name === "text");
                 const colorWidget = this.widgets?.find(w => w.name === "note_color");
                 const fontWidget = this.widgets?.find(w => w.name === "text_color");
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
 
                 if (this.sticky_ui) {
                     if (textWidget) this.sticky_ui.textarea.value = textWidget.value;
@@ -107,6 +113,45 @@ app.registerExtension({
             nodeType.prototype.onNodeCreated = function () {
                 const r = onNodeCreated ? onNodeCreated.apply(this, arguments) : undefined;
 
+<<<<<<< HEAD
+                // Store original widgets for Nodes 2.0 compatibility
+                if (!this._stickyOriginalWidgets) {
+                    this._stickyOriginalWidgets = this.widgets ? [...this.widgets] : [];
+                }
+                
+                const hideWidgets = () => {
+                    if (!this.widgets) return;
+                    const widgetsToKeep = [];
+                    const widgetsToHide = [];
+                    
+                    this.widgets.forEach(w => {
+                        if (w.name === "sticky_ui") {
+                            widgetsToKeep.push(w);
+                        } else {
+                            widgetsToHide.push(w);
+                            w.computeSize = () => [0, -4];
+                            if (w.element) w.element.style.display = "none";
+                        }
+                    });
+                    
+                    this.widgets = widgetsToKeep;
+                    this._stickyHiddenWidgets = widgetsToHide;
+                };
+                
+                if (!this._stickyGetWidget) {
+                    this._stickyGetWidget = (name) => {
+                        const visible = this.widgets ? this.widgets.find(w => w.name === name) : null;
+                        if (visible) return visible;
+                        const hidden = this._stickyHiddenWidgets ? this._stickyHiddenWidgets.find(w => w.name === name) : null;
+                        if (hidden) return hidden;
+                        return this._stickyOriginalWidgets ? this._stickyOriginalWidgets.find(w => w.name === name) : null;
+                    };
+                }
+
+                const textWidget = this._stickyOriginalWidgets.find(w => w.name === "text");
+                const noteColorWidget = this._stickyOriginalWidgets.find(w => w.name === "note_color");
+                const textColorWidget = this._stickyOriginalWidgets.find(w => w.name === "text_color");
+=======
                 // Helper to hide but keep widgets
                 const hideWidget = (name) => {
                     const w = this.widgets.find(wid => wid.name === name);
@@ -120,6 +165,7 @@ app.registerExtension({
                 const textWidget = hideWidget("text");
                 const noteColorWidget = hideWidget("note_color");
                 const textColorWidget = hideWidget("text_color");
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
 
                 // 1. Root Container
                 const root = document.createElement("div");
@@ -244,7 +290,15 @@ app.registerExtension({
                 root.appendChild(toolbar);
                 root.appendChild(contentArea);
 
+<<<<<<< HEAD
+                const domWidget = this.addDOMWidget("sticky_ui", "div", root, { serialize: false });
+                domWidget.computedHeight = 220;
+                
+                hideWidgets();
+                this.stickyHideWidgets = hideWidgets;
+=======
                 this.addDOMWidget("sticky_ui", "div", root, { serialize: false });
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
                 
                 // Expose methods for onConfigure
                 this.sticky_ui = {
@@ -254,6 +308,40 @@ app.registerExtension({
                 };
 
                 this.setSize([220, 220]);
+<<<<<<< HEAD
+                this.resizable = true;
+                
+                // Override computeSize
+                this.computeSize = function(out) {
+                    let height = LiteGraph.NODE_TITLE_HEIGHT || 30;
+                    if (this.widgets) {
+                        for (let w of this.widgets) {
+                            if (w.name === "sticky_ui" && w.computedHeight) {
+                                height += w.computedHeight;
+                            }
+                        }
+                    }
+                    const width = this.size && this.size[0] > 220 ? this.size[0] : 220;
+                    const finalHeight = this.size && this.size[1] ? this.size[1] : height;
+                    if (out) {
+                        out[0] = width;
+                        out[1] = finalHeight;
+                        return out;
+                    }
+                    return [width, finalHeight];
+                };
+                
+                // Handle reconfiguration
+                const originalConfigure = this.configure;
+                this.configure = function(info) {
+                    originalConfigure?.apply(this, arguments);
+                    if (this.stickyHideWidgets) {
+                        requestAnimationFrame(() => this.stickyHideWidgets());
+                    }
+                };
+                
+=======
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
                 return r;
             };
         }

@@ -1,7 +1,11 @@
 [project]
 name = "comfyui-internode"
 description = "A professional Audio DAW suite for ComfyUI: DSP Mixing, VST3 Hosting, ACE-Step Music Gen, Audio Reactivity, and Spectral Editing."
+<<<<<<< HEAD
+version = "3.6.0"
+=======
 version = "3.0.7"
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
 license = { text = "MIT" }
 dependencies = [
     "requests",

@@ -196,7 +196,11 @@ app.registerExtension({
             nodeType.prototype.onConfigure = function() {
                 if (onConfigure) onConfigure.apply(this, arguments);
                 
+<<<<<<< HEAD
+                const textWidget = this._markdownGetWidget ? this._markdownGetWidget("text") : this.widgets?.find(w => w.name === "text");
+=======
                 const textWidget = this.widgets?.find(w => w.name === "text");
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
                 if (textWidget && this.markdown_textarea) {
                     // Force the widget value (loaded from JSON) into the UI
                     this.markdown_textarea.value = textWidget.value;
@@ -210,11 +214,48 @@ app.registerExtension({
             nodeType.prototype.onNodeCreated = function () {
                 const r = onNodeCreated ? onNodeCreated.apply(this, arguments) : undefined;
 
+<<<<<<< HEAD
+                // Store original widgets for Nodes 2.0 compatibility
+                if (!this._markdownOriginalWidgets) {
+                    this._markdownOriginalWidgets = this.widgets ? [...this.widgets] : [];
+=======
                 const textWidget = this.widgets.find(w => w.name === "text");
                 if (textWidget) {
                     textWidget.computeSize = () => [0, 0];
                     textWidget.draw = function() { return; }; 
+>>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
                 }
+                
+                const hideWidgets = () => {
+                    if (!this.widgets) return;
+                    const widgetsToKeep = [];
+                    const widgetsToHide = [];
+                    
+                    this.widgets.forEach(w => {
+                        if (w.name === "markdown_ui") {
+                            widgetsToKeep.push(w);
+                        } else {
+                            widgetsToHide.push(w);
+                            w.computeSize = () => [0, -4];
+                            if (w.element) w.element.style.display = "none";
+                        }
+                    });
+                    
+                    this.widgets = widgetsToKeep;
+                    this._markdownHiddenWidgets = widgetsToHide;
+                };
+                
+                if (!this._markdownGetWidget) {
+                    this._markdownGetWidget = (name) => {
+                        const visible = this.widgets ? this.widgets.find(w => w.name === name) : null;
+                        if (visible) return visible;
+                        const hidden = this._markdownHiddenWidgets ? this._markdownHiddenWidgets.find(w => w.name === name) : null;
+                        if (hidden) return hidden;
+                        return this._markdownOriginalWidgets ? this._markdownOriginalWidgets.find(w => w.name === name) : null;
+                    };
+                }
+
+                const textWidget = this._markdownOriginalWidgets.find(w => w.name === "text");
 
                 // 2. Main Container
                 const container = document.createElement("div");
@@ -371,9 +412,43 @@ app.registerExtension({
                 container.appendChild(toolbar);
                 container.appendChild(contentArea);
 
-                this.addDOMWidget("markdown_ui", "div", container, { serialize: false });
+                const domWidget = this.addDOMWidget("markdown_ui", "div", container, { serialize: false });
+                domWidget.computedHeight = 700;
+                
+                hideWidgets();
+                this.markdownHideWidgets = hideWidgets;
 
                 this.setSize([500, 700]);
+                this.resizable = true;
+                
+                // Override computeSize
+                this.computeSize = function(out) {
+                    let height = LiteGraph.NODE_TITLE_HEIGHT || 30;
+                    if (this.widgets) {
+                        for (let w of this.widgets) {
+                            if (w.name === "markdown_ui" && w.computedHeight) {
+                                height += w.computedHeight;
+                            }
+                        }
+                    }
+                    const width = this.size && this.size[0] > 500 ? this.size[0] : 500;
+                    const finalHeight = this.size && this.size[1] ? this.size[1] : height;
+                    if (out) {
+                        out[0] = width;
+                        out[1] = finalHeight;
+                        return out;
+                    }
+                    return [width, finalHeight];
+                };
+                
+                // Handle reconfiguration
+                const originalConfigure = this.configure;
+                this.configure = function(info) {
+                    originalConfigure?.apply(this, arguments);
+                    if (this.markdownHideWidgets) {
+                        requestAnimationFrame(() => this.markdownHideWidgets());
+                    }
+                };
                 
                 return r;
             };
