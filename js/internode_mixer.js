@@ -1,33 +1,33 @@
 // ComfyUI/custom_nodes/ComfyUI-Internode/js/internode_mixer.js
-// VERSION: 3.0.0
+// VERSION: 3.0.2
 
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 
-console.log("%c#### Internode: Mixer UI v4.3.1 Loaded (UI Restoration)", "color: orange; font-weight: bold;");
+console.log("%c#### Internode: Mixer UI v3.0.2 Loaded (Layout Fix)", "color: orange; font-weight: bold;");
 
 // --- CONSTANTS ---
 const DEFAULTS = {
-    master_vol: 1.0,
-    master_drive: 0.0,
-    master_locut: 20.0,
-    master_hicut: 20000.0,
-    master_ceil: 1.0,
-    master_gate: 0.0,
-    master_comp: 0.0,
-    master_eq: 1.0,
-    master_bal: 0.0,
-    master_width: 1.0,
+    master_vol: 1,
+    master_drive: 0,
+    master_locut: 20,
+    master_hicut: 20000,
+    master_ceil: 1,
+    master_gate: 0,
+    master_comp: 0,
+    master_eq: 1,
+    master_bal: 0,
+    master_width: 1,
     master_mono: false,
     
     vol: 0.75,
-    pan: 0.0,
-    eq: 1.0,
-    gate: 0.0,
-    comp: 0.0,
+    pan: 0,
+    eq: 1,
+    gate: 0,
+    comp: 0,
     d_time: 0.35,
     d_fb: 0.4,
-    d_mix: 0.0,
+    d_mix: 0,
     d_echo: 4,
     mute: false,
     solo: false
@@ -50,7 +50,7 @@ class MixerAudioEngine {
 
     init() {
         if (!this.ctx) {
-            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            this.ctx = new (globalThis.AudioContext || globalThis.webkitAudioContext)();
         }
     }
 
@@ -104,7 +104,7 @@ class MixerAudioEngine {
                 gain: this.ctx.createGain(), pan: this.ctx.createStereoPanner(),
                 eqLow: this.ctx.createBiquadFilter(), eqMid: this.ctx.createBiquadFilter(), eqHigh: this.ctx.createBiquadFilter(),
                 comp: this.ctx.createDynamicsCompressor(),
-                delay: this.ctx.createDelay(2.0), delayFb: this.ctx.createGain(), delayMix: this.ctx.createGain(), delayDry: this.ctx.createGain(),
+                delay: this.ctx.createDelay(2), delayFb: this.ctx.createGain(), delayMix: this.ctx.createGain(), delayDry: this.ctx.createGain(),
                 analyser: this.ctx.createAnalyser()
             };
 
@@ -125,15 +125,14 @@ class MixerAudioEngine {
             this.channels[i] = ch;
 
             const inputSlot = node.inputs ? node.inputs.find(inp => inp.name === `track_${i}`) : null;
-            if (inputSlot && inputSlot.link) {
+            if (inputSlot?.link) {
                 const linkId = inputSlot.link;
                 const link = app.graph.links[linkId];
                 if (link) {
                     const originNode = app.graph.getNodeById(link.origin_id);
-                    if (originNode && originNode.type === "InternodeAudioLoader") {
+                    if (originNode?.type === "InternodeAudioLoader") {
                         const fileWidget = originNode.widgets ? originNode.widgets.find(w => w.name === "audio_file") : null;
-                        if (fileWidget && fileWidget.value && fileWidget.value !== "none") {
-                            const filename = encodeURIComponent(fileWidget.value);
+                        if (fileWidget?.value && fileWidget.value !== "none") {
                             const url = api.apiURL(`/view?filename=${encodeURIComponent(fileWidget.value)}&type=input`);
                             promises.push(this.loadTrack(url).then(buf => { ch.buffer = buf; }));
                         }
@@ -147,7 +146,7 @@ class MixerAudioEngine {
     start() {
         if (!this.ctx) return;
         this.channels.forEach((ch, i) => {
-            if (ch && ch.buffer) {
+            if (ch?.buffer) {
                 ch.source = this.ctx.createBufferSource();
                 ch.source.buffer = ch.buffer;
                 ch.source.connect(ch.delayDry); ch.source.connect(ch.delay);
@@ -160,9 +159,14 @@ class MixerAudioEngine {
     stop() {
         if (!this.ctx) return;
         this.channels.forEach(ch => {
-            if (ch && ch.source) {
-                try { ch.source.stop(); } catch(e){}
-                ch.source.disconnect(); ch.source = null;
+            if (ch?.source) {
+                try { 
+                    ch.source.stop(); 
+                } catch(e) {
+                    console.warn("Failed to stop audio source:", e);
+                }
+                ch.source.disconnect(); 
+                ch.source = null;
             }
         });
         this.isPlaying = false;
@@ -229,7 +233,7 @@ class MixerAudioEngine {
             }
             
             let effVol = vol;
-            if (anySolo) { if(!solo) effVol = 0.0; } else if (mute) effVol = 0.0;
+            if (anySolo) { if(!solo) effVol = 0; } else if (mute) effVol = 0;
 
             ch.gain.gain.setTargetAtTime(effVol, now, 0.05);
             ch.pan.pan.setTargetAtTime(pan, now, 0.05);
@@ -247,7 +251,7 @@ class MixerAudioEngine {
             ch.delay.delayTime.setTargetAtTime(dt, now, 0.1);
             ch.delayFb.gain.setTargetAtTime(df, now, 0.1);
             ch.delayMix.gain.setTargetAtTime(dm, now, 0.1);
-            ch.delayDry.gain.setTargetAtTime(1.0 - dm, now, 0.1);
+            ch.delayDry.gain.setTargetAtTime(1 - dm, now, 0.1);
         }
     }
     
@@ -256,15 +260,17 @@ class MixerAudioEngine {
         const res = { channels: [], master: 0 };
         const arr = new Uint8Array(128);
         for(let i=1; i<=this.channelCount; i++) {
-            if(this.channels[i] && this.channels[i].analyser) {
+            if(this.channels[i]?.analyser) {
                 this.channels[i].analyser.getByteFrequencyData(arr);
-                let sum=0; for(let j=0; j<arr.length; j++) sum+=arr[j];
+                let sum=0; 
+                for(const val of arr) sum += val;
                 res.channels[i] = (sum/arr.length)/64;
             }
         }
         if(this.master.analyser) {
             this.master.analyser.getByteFrequencyData(arr);
-            let sum=0; for(let j=0; j<arr.length; j++) sum+=arr[j];
+            let sum=0; 
+            for(const val of arr) sum += val;
             res.master = (sum/arr.length)/64;
         }
         return res;
@@ -274,12 +280,19 @@ class MixerAudioEngine {
 // --- UI COMPONENTS ---
 
 function getParamStatus(node, paramName) {
-    const widget = node.widgets ? node.widgets.find(w => w.name === paramName) : null;
+    // Use custom getter to access hidden widgets
+    let widget;
+    if (node._internodeGetWidget) {
+        widget = node._internodeGetWidget(paramName);
+    } else {
+        widget = node.widgets ? node.widgets.find(w => w.name === paramName) : null;
+    }
+    
     const input = node.inputs ? node.inputs.find(i => i.name === paramName) : null;
     return {
         widget: widget,
         input: input,
-        isAutomated: !!(input && input.link),
+        isAutomated: !!input?.link,
         exists: !!(widget || input)
     };
 }
@@ -290,7 +303,10 @@ function createMeter(height, node, volParamName, engine, channelIndex, isMaster=
     const segments = [];
     for(let i=0; i<15; i++) {
         const seg = document.createElement("div");
-        let color = i>12 ? "#f00" : i>10 ? "#ff0" : "#0f0";
+        let color;
+        if (i > 12) color = "#f00";
+        else if (i > 10) color = "#ff0";
+        else color = "#0f0";
         Object.assign(seg.style, { width: "100%", flex: "1", backgroundColor: color, opacity: "0.2", borderRadius: "1px", transition: "opacity 0.05s" });
         container.appendChild(seg);
         segments.push(seg);
@@ -298,7 +314,7 @@ function createMeter(height, node, volParamName, engine, channelIndex, isMaster=
     const animate = () => {
         if(!container.isConnected) return;
         let signal = 0;
-        if (engine && engine.isPlaying) {
+        if (engine?.isPlaying) {
             const levels = engine.getLevels();
             signal = isMaster ? levels.master : (levels.channels[channelIndex] || 0);
         } else {
@@ -306,7 +322,7 @@ function createMeter(height, node, volParamName, engine, channelIndex, isMaster=
             const val = status.widget ? status.widget.value : DEFAULTS.vol;
             if(val > 0.01) signal = val * 0.1; 
         }
-        signal = Math.min(1.0, Math.max(0, signal));
+        signal = Math.min(1, Math.max(0, signal));
         const active = Math.floor(signal * 15);
         for(let i=0; i<15; i++) segments[i].style.opacity = (i < active) ? "1.0" : "0.2";
         requestAnimationFrame(animate);
@@ -376,13 +392,18 @@ function createMiniKnob(label, paramName, node, range=[0, 1], color="#aaa") {
             updateVisual();
         }
     };
-    const onUp = (e) => { window.removeEventListener("pointermove", onMove); window.removeEventListener("pointerup", onUp); if (knob.releasePointerCapture) knob.releasePointerCapture(e.pointerId); };
+    const onUp = (e) => { 
+        globalThis.removeEventListener("pointermove", onMove); 
+        globalThis.removeEventListener("pointerup", onUp); 
+        if (knob.releasePointerCapture) knob.releasePointerCapture(e.pointerId); 
+    };
     const startDrag = (e) => { 
         const status = getParamStatus(node, paramName);
         if(status.isAutomated) return;
         e.stopPropagation(); e.preventDefault(); startY = e.clientY; startVal = currentVal; 
         if (knob.setPointerCapture) knob.setPointerCapture(e.pointerId); 
-        window.addEventListener("pointermove", onMove); window.addEventListener("pointerup", onUp); 
+        globalThis.addEventListener("pointermove", onMove); 
+        globalThis.addEventListener("pointerup", onUp); 
     };
 
     knob.addEventListener("pointerdown", startDrag); 
@@ -391,9 +412,10 @@ function createMiniKnob(label, paramName, node, range=[0, 1], color="#aaa") {
         const status = getParamStatus(node, paramName);
         if(status.isAutomated) return;
         currentVal = (range[0]+range[1])/2; 
-        if(["High","Mid","Low","Width","Ceil"].includes(label)) currentVal=1.0; 
-        if(["PAN","Bal","Drive","Gate","Comp"].includes(label)) currentVal=0.0;
-        if(label==="LoCut") currentVal=20.0; if(label==="HiCut") currentVal=20000.0;
+        if(["High","Mid","Low","Width","Ceil"].includes(label)) currentVal=1;
+        if(["PAN","Bal","Drive","Gate","Comp"].includes(label)) currentVal=0;
+        if(label==="LoCut") currentVal=20; 
+        if(label==="HiCut") currentVal=20000;
         if(status.widget) status.widget.value = currentVal;
         updateVisual(); 
     });
@@ -401,7 +423,7 @@ function createMiniKnob(label, paramName, node, range=[0, 1], color="#aaa") {
     return wrapper;
 }
 
-function createKnob(label, paramName, node) { return createMiniKnob(label, paramName, node, [-1.0, 1.0], "#fff"); }
+function createKnob(label, paramName, node) { return createMiniKnob(label, paramName, node, [-1, 1], "#fff"); }
 
 function createFader(paramName, node, height=120, isMaster=false) {
     const track = document.createElement("div");
@@ -415,7 +437,7 @@ function createFader(paramName, node, height=120, isMaster=false) {
 
     const def = isMaster ? DEFAULTS.master_vol : DEFAULTS.vol;
     let currentVal = def;
-    const max = isMaster ? 2.0 : 1.5; 
+    const max = isMaster ? 2 : 1.5; 
     
     const updateVisual = () => {
         const status = getParamStatus(node, paramName);
@@ -442,7 +464,7 @@ function createFader(paramName, node, height=120, isMaster=false) {
         const delta = startY - e.clientY;
         const multiplier = e.shiftKey ? 0.001 : 0.005;
         let newVal = startVal + (delta * multiplier);
-        newVal = Math.max(0.0, Math.min(max, newVal));
+        newVal = Math.max(0, Math.min(max, newVal));
         const status = getParamStatus(node, paramName);
         if(status.widget && !status.isAutomated) {
             status.widget.value = newVal;
@@ -450,13 +472,18 @@ function createFader(paramName, node, height=120, isMaster=false) {
             updateVisual();
         }
     };
-    const onUp = (e) => { window.removeEventListener("pointermove", onMove); window.removeEventListener("pointerup", onUp); if(track.releasePointerCapture) track.releasePointerCapture(e.pointerId); };
+    const onUp = (e) => { 
+        globalThis.removeEventListener("pointermove", onMove); 
+        globalThis.removeEventListener("pointerup", onUp); 
+        if(track.releasePointerCapture) track.releasePointerCapture(e.pointerId); 
+    };
     const startDrag = (e) => { 
         const status = getParamStatus(node, paramName);
         if(status.isAutomated) return;
         e.stopPropagation(); e.preventDefault(); startY = e.clientY; startVal = currentVal; 
         if(track.setPointerCapture) track.setPointerCapture(e.pointerId); 
-        window.addEventListener("pointermove", onMove); window.addEventListener("pointerup", onUp); 
+        globalThis.addEventListener("pointermove", onMove); 
+        globalThis.addEventListener("pointerup", onUp); 
     };
     track.addEventListener("pointerdown", startDrag); 
     track.addEventListener("dblclick", (e) => { 
@@ -534,22 +561,58 @@ function refreshUI(container) {
 function buildMixerUI(node, channelCount) {
     const engine = new MixerAudioEngine(channelCount);
     
-    // UI HIDING FIX: Iterate all widgets and hide them from the view
-    // so they don't clutter the node, but keep them for logic.
-    if (node.widgets) {
-        node.widgets.forEach(w => {
-            // standard comyui way to hide widget: computeSize returns [0, -4]
-            w.computeSize = () => [0, -4];
-            // Optionally, we can set type to "hidden" but that might affect saving values
-            // depending on Comfy version. computeSize is safest for visual hiding.
-            // Some themes might need type="custom" to fully hide.
-        });
+    // Store original widgets for functionality but remove from rendering
+    // This is the key fix for Nodes 2.0 - hidden widgets still render unless removed from array
+    if (!node._internodeOriginalWidgets) {
+        node._internodeOriginalWidgets = node.widgets ? [...node.widgets] : [];
     }
-
+    
+    const hideWidgets = () => {
+        if (!node.widgets) return;
+        
+        // Store widgets we need to keep for functionality
+        const widgetsToKeep = [];
+        const widgetsToHide = [];
+        
+        node.widgets.forEach(w => {
+            if (w.name === "mixer_ui") {
+                widgetsToKeep.push(w);
+            } else {
+                widgetsToHide.push(w);
+                w.computeSize = () => [0, -4];
+                if (w.element) w.element.style.display = "none";
+            }
+        });
+        
+        // In Nodes 2.0, only keep the mixer_ui widget visible
+        // All other widgets are removed from the array but stored for access
+        node.widgets = widgetsToKeep;
+        node._internodeHiddenWidgets = widgetsToHide;
+    };
+    
+    // Override widget access to return hidden widgets when needed
+    if (!node._internodeGetWidget) {
+        node._internodeGetWidget = (name) => {
+            // Check visible widgets first
+            const visible = node.widgets ? node.widgets.find(w => w.name === name) : null;
+            if (visible) return visible;
+            
+            // Check hidden widgets
+            const hidden = node._internodeHiddenWidgets ? node._internodeHiddenWidgets.find(w => w.name === name) : null;
+            if (hidden) return hidden;
+            
+            // Check original widgets
+            return node._internodeOriginalWidgets ? node._internodeOriginalWidgets.find(w => w.name === name) : null;
+        };
+    }
+    
+    hideWidgets();
+    node.internodeHideWidgets = hideWidgets; // Attach to node for reuse
+    
     const paramLoop = () => { 
         if(node.graph) {
             engine.updateParams(node);
-            if (node.ui_container && node.ui_container.isConnected) {
+            if (node.ui_container?.isConnected) {
                 refreshUI(node.ui_container);
             }
         }
@@ -557,20 +620,44 @@ function buildMixerUI(node, channelCount) {
     };
     requestAnimationFrame(paramLoop);
 
+    // ROOT CONTAINER (Holds Scrollable Mixer + Footer)
+    const root = document.createElement("div");
+    Object.assign(root.style, {
+        position: "relative",
+        width: "100%",
+        display: "flex", 
+        flexDirection: "column",
+        backgroundColor: "#111", 
+        borderRadius: "6px",
+        overflow: "hidden",
+        boxSizing: "border-box"
+    });
+
+    // SCROLLABLE MIXER AREA (This mimics the old 'container' behavior)
     const container = document.createElement("div");
     node.ui_container = container; 
 
     Object.assign(container.style, { 
         display: "flex", flexDirection: "row", 
-        backgroundColor: "#111", borderRadius: "6px", padding: "8px", boxSizing: "border-box", gap: "4px", 
-        width: "100%", height: "100%", 
+        padding: "8px", boxSizing: "border-box", gap: "4px", 
+        width: "100%", flex: "1", // Take remaining height
         overflowX: "auto", overflowY: "hidden",
         alignItems: "stretch", touchAction: "none" 
     });
     
+    // FOOTER (Warning)
+    const footer = document.createElement("div");
+    Object.assign(footer.style, {
+        width: "100%", padding: "2px 5px",
+        backgroundColor: "#221100", borderTop: "1px solid #553300",
+        color: "#fa0", fontSize: "9px", fontFamily: "sans-serif",
+        textAlign: "center", boxSizing: "border-box", flexShrink: "0"
+    });
+    footer.innerHTML = "⚠ <b>PREVIEW MODE:</b> Web Audio Approximation. Final render (PyTorch) may vary.";
+
     const stop = (e) => e.stopPropagation();
-    container.addEventListener("pointerdown", stop); 
-    container.addEventListener("wheel", stop, {passive: true});
+    root.addEventListener("pointerdown", stop); 
+    root.addEventListener("wheel", stop, {passive: true});
 
     const doReset = () => {
         if(confirm("Reset all mixer settings?")) {
@@ -620,13 +707,13 @@ function buildMixerUI(node, channelCount) {
         lbl.textContent = i;
         Object.assign(lbl.style, { textAlign: "center", color: "#fff", fontWeight: "bold", fontSize: "12px", marginBottom: "4px", boxSizing: "border-box", flexShrink: "0" });
         strip.appendChild(lbl);
-        strip.appendChild(createMiniKnob("Time", `d_time_${i}`, node, [0.01, 2.0], "#0af"));
-        strip.appendChild(createMiniKnob("Fdbk", `d_fb_${i}`, node, [0.0, 0.95], "#0af"));
-        strip.appendChild(createMiniKnob("Mix", `d_mix_${i}`, node, [0.0, 1.0], "#0af"));
+        strip.appendChild(createMiniKnob("Time", `d_time_${i}`, node, [0.01, 2], "#0af"));
+        strip.appendChild(createMiniKnob("Fdbk", `d_fb_${i}`, node, [0, 0.95], "#0af"));
+        strip.appendChild(createMiniKnob("Mix", `d_mix_${i}`, node, [0, 1], "#0af"));
         strip.appendChild(createMiniKnob("Echo", `d_echo_${i}`, node, [1, 16], "#0af"));
         strip.appendChild(createDivider());
-        strip.appendChild(createMiniKnob("Gate", `gate_${i}`, node, [0.0, 1.0], "#f50"));
-        strip.appendChild(createMiniKnob("Comp", `comp_${i}`, node, [0.0, 1.0], "#fa0"));
+        strip.appendChild(createMiniKnob("Gate", `gate_${i}`, node, [0, 1], "#f50"));
+        strip.appendChild(createMiniKnob("Comp", `comp_${i}`, node, [0, 1], "#fa0"));
         strip.appendChild(createDivider());
         strip.appendChild(createMiniKnob("High", `eq_high_${i}`, node, [0, 3]));
         strip.appendChild(createMiniKnob("Mid", `eq_mid_${i}`, node, [0, 3]));
@@ -662,13 +749,13 @@ function buildMixerUI(node, channelCount) {
     btnRow.appendChild(createButton("R", "reset_trigger", node, "#fff", doReset));
     btnRow.appendChild(createButton("Mn", "master_mono", node, "#0af"));
     master.appendChild(btnRow);
-    master.appendChild(createMiniKnob("Drive", "master_drive", node, [0.0, 1.0], "#d44"));
-    master.appendChild(createMiniKnob("LoCut", "master_locut", node, [20.0, 200.0], "#888"));
-    master.appendChild(createMiniKnob("HiCut", "master_hicut", node, [8000.0, 20000.0], "#888"));
-    master.appendChild(createMiniKnob("Ceil", "master_ceil", node, [0.1, 1.0], "#d44"));
+    master.appendChild(createMiniKnob("Drive", "master_drive", node, [0, 1], "#d44"));
+    master.appendChild(createMiniKnob("LoCut", "master_locut", node, [20, 200], "#888"));
+    master.appendChild(createMiniKnob("HiCut", "master_hicut", node, [8000, 20000], "#888"));
+    master.appendChild(createMiniKnob("Ceil", "master_ceil", node, [0.1, 1], "#d44"));
     master.appendChild(createDivider());
-    master.appendChild(createMiniKnob("Gate", "master_gate", node, [0.0, 1.0], "#f50"));
-    master.appendChild(createMiniKnob("Comp", "master_comp", node, [0.0, 1.0], "#fa0"));
+    master.appendChild(createMiniKnob("Gate", "master_gate", node, [0, 1], "#f50"));
+    master.appendChild(createMiniKnob("Comp", "master_comp", node, [0, 1], "#fa0"));
     master.appendChild(createDivider());
     master.appendChild(createMiniKnob("High", "master_eq_high", node, [0, 3]));
     master.appendChild(createMiniKnob("Mid", "master_eq_mid", node, [0, 3]));
@@ -687,11 +774,25 @@ function buildMixerUI(node, channelCount) {
     master.appendChild(mFaderRow);
     container.appendChild(master);
 
-    node.addDOMWidget("mixer_ui", "div", container, { serialize: false });
+    // Add Parts to Root
+    root.appendChild(container);
+    root.appendChild(footer);
+
+    // Add DOM widget with fixed height
+    const domWidget = node.addDOMWidget("mixer_ui", "div", root, { serialize: false });
+    
+    // Set the computed height so the widget knows how much space it needs
+    domWidget.computedHeight = 700;
+    
+    // Ensure root fills the DOM widget's allocated space
+    root.style.minHeight = "700px";
+    root.style.height = "700px";
     
     // Resize node to fit custom UI
     const width = (channelCount * 54) + 70; 
-    node.setSize([width, 680]); 
+    node.setSize([width, 700]);
+    node.resizable = true;
+ 
 }
 
 app.registerExtension({
@@ -703,10 +804,40 @@ app.registerExtension({
                 const r = onNodeCreated ? onNodeCreated.apply(this, arguments) : undefined;
                 buildMixerUI(this, nodeData.name === "InternodeAudioMixer8" ? 8 : 4);
                 
+                // Override computeSize to return size based on DOM widget, not hidden widgets
+                this.computeSize = function(out) {
+                    const channelCount = nodeData.name === "InternodeAudioMixer8" ? 8 : 4;
+                    const baseWidth = (channelCount * 54) + 70;
+                    
+                    // Start with title bar height
+                    let height = LiteGraph.NODE_TITLE_HEIGHT || 30;
+                    
+                    // Add DOM widget height only (all other widgets are hidden)
+                    if (this.widgets) {
+                        for (let w of this.widgets) {
+                            if (w.name === "mixer_ui" && w.computedHeight) {
+                                height += w.computedHeight;
+                            }
+                        }
+                    }
+                    
+                    // If manually resized, preserve those dimensions
+                    const width = this.size && this.size[0] > baseWidth ? this.size[0] : baseWidth;
+                    const finalHeight = this.size?.[1] || height;
+                    
+                    if (out) {
+                        out[0] = width;
+                        out[1] = finalHeight;
+                        return out;
+                    }
+                    return [width, finalHeight];
+                };
+                
                 // Keep configuration sync
                 const originalConfigure = this.configure;
                 this.configure = function(info) {
                     originalConfigure?.apply(this, arguments);
+                    if (this.internodeHideWidgets) { requestAnimationFrame(() => this.internodeHideWidgets()); }
                 }
                 return r;
             };

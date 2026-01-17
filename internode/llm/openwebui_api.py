@@ -1,5 +1,5 @@
 # ComfyUI/custom_nodes/ComfyUI-Internode/openwebui_api.py
-# VERSION: 3.0.0
+# VERSION: 3.0.1
 
 import requests
 import base64
@@ -66,17 +66,21 @@ class OpenWebUIAPI:
         
         return content
 
-    def chat_completions(self, model, prompt, images=None, audio=None, video=None, max_retries=3):
-        # Prepare Multimodal Content
-        # Note: 'images' expected as list of PIL objects
-        # 'audio' expected as base64 string
-        # 'video' expected as base64 string (if file)
+    def chat_completions(self, model, prompt, messages=None, images=None, audio=None, video=None, max_retries=3):
+        # Prepare Multimodal Content for the NEW message
+        current_content = self._prepare_content(prompt, images, audio, video)
         
-        message_content = self._prepare_content(prompt, images, audio, video)
+        # Construct the new user message
+        new_message = {"role": "user", "content": current_content}
+
+        # Combine history (if provided) with the new message
+        # We copy to avoid mutating the original list if passed by reference elsewhere
+        payload_messages = list(messages) if messages else []
+        payload_messages.append(new_message)
 
         data = {
             "model": model,
-            "messages": [{"role": "user", "content": message_content}],
+            "messages": payload_messages,
             "stream": False,
         }
         

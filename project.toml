@@ -1,7 +1,7 @@
 [project]
 name = "comfyui-internode"
-description = "A comprehensive suite of Audio, DSP, Mixing, Markdown, and OpenWebUI integration nodes for ComfyUI."
-version = "3.0.0"
+description = "A professional Audio DAW suite for ComfyUI: DSP Mixing, VST3 Hosting, ACE-Step Music Gen, Audio Reactivity, and Spectral Editing."
+version = "3.6.0"
 license = { text = "MIT" }
 dependencies = [
     "requests",
@@ -18,19 +18,18 @@ dependencies = [
     "opencv-python",
     "soundfile",
     "pydub",
-	"librosa",
     "pedalboard",
-	"demucs"
+    "demucs",
+    "mido"
 ]
 readme = "README.md"
 authors = [
     { name = "Internode", email = "pkeffect@gmail.com" }
 ]
-keywords = ["comfyui", "audio", "analyze", "mixing", "dsp", "openwebui", "markdown", "vst plugins"]
+keywords = ["comfyui", "audio", "mixing", "dsp", "vst", "midi", "spectral", "analysis", "openwebui", "markdown"]
 
 [project.urls]
 Repository = "https://github.com/pkeffect/ComfyUI-Internode"
-# Update the URL above to your actual Git repository URL
 
 [tool.comfy]
 PublisherId = "internode"

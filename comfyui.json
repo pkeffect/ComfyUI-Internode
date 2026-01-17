@@ -2,17 +2,157 @@
   "name": "ComfyUI-Internode",
   "id": "comfyui-internode",
   "author": "pkeffect",
-  "description": "A powerful node pack containing Audio Mixers (DSP), ACE-Step Music Generation, OpenWebUI Integration, and Markdown utilities.",
-  "version": "3.0.0",
+  "description": "Professional Audio DAW Suite for ComfyUI: DSP Mixing, VST3 Hosting, ACE-Step Music Generation, OpenWebUI LLM Integration, Video FX, and Audio Reactivity. Fully compatible with ComfyUI Nodes 2.0.",
+  "version": "3.6.0",
   "nodes": [
     {
+      "name": "Internode_OpenWebUIServerConfig",
+      "display_name": "OpenWebUI Server Config (Internode)",
+      "category": "Internode/OpenWebUI"
+    },
+    {
+      "name": "Internode_OpenWebUINode",
+      "display_name": "OpenWebUI Unified Chat (Internode)",
+      "category": "Internode/OpenWebUI"
+    },
+    {
+      "name": "Internode_OpenWebUIRefreshModels",
+      "display_name": "OpenWebUI Refresh Models (Internode)",
+      "category": "Internode/OpenWebUI"
+    },
+    {
+      "name": "InternodeLLMPromptOptimizer",
+      "display_name": "LLM Prompt Optimizer (Text) (Internode)",
+      "category": "Internode/LLM Text"
+    },
+    {
+      "name": "InternodeLLMStyleTransfer",
+      "display_name": "LLM Style Transfer (Text) (Internode)",
+      "category": "Internode/LLM Text"
+    },
+    {
+      "name": "InternodeLLMStoryBrancher",
+      "display_name": "LLM Story Brancher (Text) (Internode)",
+      "category": "Internode/LLM Text"
+    },
+    {
+      "name": "InternodeLLMCharacterGen",
+      "display_name": "LLM Character Generator (Text) (Internode)",
+      "category": "Internode/LLM Text"
+    },
+    {
+      "name": "InternodeLLMDialogue",
+      "display_name": "LLM Dialogue Writer (Text) (Internode)",
+      "category": "Internode/LLM Text"
+    },
+    {
+      "name": "InternodeLLMWorldBuilder",
+      "display_name": "LLM World Builder (Text) (Internode)",
+      "category": "Internode/LLM Text"
+    },
+    {
+      "name": "InternodeLLMCodeGen",
+      "display_name": "LLM Code Generator (Text) (Internode)",
+      "category": "Internode/LLM Text"
+    },
+    {
+      "name": "InternodeLLMSummarizer",
+      "display_name": "LLM Summarizer (Text) (Internode)",
+      "category": "Internode/LLM Text"
+    },
+    {
+      "name": "InternodeLLMClassifier",
+      "display_name": "LLM Classifier (Text) (Internode)",
+      "category": "Internode/LLM Text"
+    },
+    {
+      "name": "InternodeLLMPersona",
+      "display_name": "LLM Persona Switcher (Text) (Internode)",
+      "category": "Internode/LLM Text"
+    },
+    {
+      "name": "InternodeVisionRefiner",
+      "display_name": "Image Prompt Refiner (Vision) (Internode)",
+      "category": "Internode/LLM Vision"
+    },
+    {
+      "name": "InternodeVisionStyleMatcher",
+      "display_name": "Image Style Matcher (Vision) (Internode)",
+      "category": "Internode/LLM Vision"
+    },
+    {
+      "name": "InternodeVisionContentExtractor",
+      "display_name": "Image Content Extractor (Vision) (Internode)",
+      "category": "Internode/LLM Vision"
+    },
+    {
+      "name": "InternodeVisionInpaintPrompter",
+      "display_name": "Inpaint Prompt Generator (Vision) (Internode)",
+      "category": "Internode/LLM Vision"
+    },
+    {
+      "name": "InternodePromptEnricher",
+      "display_name": "Prompt Enricher (Legacy) (Internode)",
+      "category": "Internode/LLM Vision"
+    },
+    {
+      "name": "InternodeImageCritic",
+      "display_name": "Image Critic (Vision) (Internode)",
+      "category": "Internode/LLM Vision"
+    },
+    {
+      "name": "InternodeSmartRenamer",
+      "display_name": "Smart Renamer & Save (Vision) (Internode)",
+      "category": "Internode/LLM Vision"
+    },
+    {
+      "name": "InternodeVideoNarrator",
+      "display_name": "Video Scene Narrator (LLM) (Internode)",
+      "category": "Internode/LLM Video"
+    },
+    {
+      "name": "InternodeAIColorist",
+      "display_name": "AI Video Colorist (LLM) (Internode)",
+      "category": "Internode/LLM Video"
+    },
+    {
+      "name": "InternodeVideoSceneDescriptor",
+      "display_name": "Video Scene Descriptor (LLM) (Internode)",
+      "category": "Internode/LLM Video"
+    },
+    {
+      "name": "InternodeVideoTrackerPrompt",
+      "display_name": "Video Object Tracker (LLM) (Internode)",
+      "category": "Internode/LLM Video"
+    },
+    {
+      "name": "InternodeMusicPromptGen",
+      "display_name": "Music Prompt Generator (LLM) (Internode)",
+      "category": "Internode/LLM Audio"
+    },
+    {
+      "name": "InternodeMusicStructureGen",
+      "display_name": "Music Structure Planner (LLM) (Internode)",
+      "category": "Internode/LLM Audio"
+    },
+    {
+      "name": "InternodeMusicCritic",
+      "display_name": "Music Critic (LLM) (Internode)",
+      "category": "Internode/LLM Audio"
+    },
+    {
+      "name": "InternodeVocalScriptGen",
+      "display_name": "Vocal Script/Lyrics (LLM) (Internode)",
+      "category": "Internode/LLM Audio"
+    },
+    {
       "name": "InternodeAceStepLoader",
-      "display_name": "ACE-Step Loader (Internode)",
+      "display_name": "ACE-Step Model Loader (Internode)",
       "category": "Internode/ACE-Step"
     },
     {
       "name": "InternodeAceStepGenerator",
-      "display_name": "ACE-Step Generator (Internode)",
+      "display_name": "ACE-Step Music Generator (Internode)",
       "category": "Internode/ACE-Step"
     },
     {
@@ -21,54 +161,219 @@
       "category": "Internode/ACE-Step"
     },
     {
+      "name": "InternodeSimpleSoundGen",
+      "display_name": "SFX Generator (Synth) (Internode)",
+      "category": "Internode/Generative Audio"
+    },
+    {
+      "name": "InternodeAmbienceGen",
+      "display_name": "Ambience Generator (DSP) (Internode)",
+      "category": "Internode/Generative Audio"
+    },
+    {
+      "name": "InternodeAudioStyleTransferDSP",
+      "display_name": "Audio Style Match (DSP) (Internode)",
+      "category": "Internode/Generative Audio"
+    },
+    {
       "name": "InternodeAudioMixer",
-      "display_name": "Audio Mixer 4-Ch + EQ (Internode)",
+      "display_name": "Audio Mixer 4-Ch + EQ (DSP) (Internode)",
       "category": "Internode/AudioFX"
     },
     {
       "name": "InternodeAudioMixer8",
-      "display_name": "Audio Mixer 8-Ch + EQ (Internode)",
+      "display_name": "Audio Mixer 8-Ch + EQ (DSP) (Internode)",
+      "category": "Internode/AudioFX"
+    },
+    {
+      "name": "InternodeAudioSaver",
+      "display_name": "Audio Saver (IO) (Internode)",
+      "category": "Internode/AudioFX"
+    },
+    {
+      "name": "InternodeSidechain",
+      "display_name": "Audio Sidechain/Ducker (DSP) (Internode)",
+      "category": "Internode/AudioFX"
+    },
+    {
+      "name": "InternodeStemSplitter",
+      "display_name": "Audio Stem Splitter (Demucs) (Internode)",
       "category": "Internode/AudioFX"
     },
     {
       "name": "InternodeAudioLoader",
-      "display_name": "Audio Loader (Internode)",
+      "display_name": "Audio Loader (IO) (Internode)",
       "category": "Internode/Loaders"
     },
     {
       "name": "InternodeVideoLoader",
-      "display_name": "Video Loader (Internode)",
+      "display_name": "Video Loader (IO) (Internode)",
       "category": "Internode/Loaders"
     },
     {
       "name": "InternodeImageLoader",
-      "display_name": "Image Loader (Internode)",
+      "display_name": "Image Loader (IO) (Internode)",
       "category": "Internode/Loaders"
     },
     {
-      "name": "InternodeAudioSaver",
-      "display_name": "Audio Saver (Internode)",
-      "category": "Internode/AudioFX"
+      "name": "InternodeMidiLoader",
+      "display_name": "MIDI Loader (IO) (Internode)",
+      "category": "Internode/Loaders"
+    },
+    {
+      "name": "InternodeStudioSurface",
+      "display_name": "Internode Studio Surface (UI)",
+      "category": "Internode/VST3"
+    },
+    {
+      "name": "InternodeVST3Effect",
+      "display_name": "VST3 Effect Processor (Internode)",
+      "category": "Internode/VST3"
+    },
+    {
+      "name": "InternodeVST3Instrument",
+      "display_name": "VST3 Instrument (MIDI) (Internode)",
+      "category": "Internode/VST3"
+    },
+    {
+      "name": "InternodeVST3Param",
+      "display_name": "VST3 Parameter Automation (Internode)",
+      "category": "Internode/VST3"
+    },
+    {
+      "name": "InternodeVST3Info",
+      "display_name": "VST3 Info & Param List (Internode)",
+      "category": "Internode/VST3"
+    },
+    {
+      "name": "InternodeVSTLoader",
+      "display_name": "VST3 Loader (Legacy) (Internode)",
+      "category": "Internode/VST3"
+    },
+    {
+      "name": "InternodeAudioAnalyzer",
+      "display_name": "Audio Analyzer (Curves) (Internode)",
+      "category": "Internode/Analysis"
+    },
+    {
+      "name": "InternodeAudioToKeyframes",
+      "display_name": "Audio to Keyframes (React) (Internode)",
+      "category": "Internode/Analysis"
+    },
+    {
+      "name": "InternodeSpectrogram",
+      "display_name": "Audio to Spectrogram (Image) (Internode)",
+      "category": "Internode/Spectral"
+    },
+    {
+      "name": "InternodeImageToAudio",
+      "display_name": "Spectrogram to Audio (Reconstruct) (Internode)",
+      "category": "Internode/Spectral"
+    },
+    {
+      "name": "InternodeUniversalPlayer",
+      "display_name": "Universal Media Player (VideoFX) (Internode)",
+      "category": "Internode/VideoFX"
+    },
+    {
+      "name": "InternodeABComparator",
+      "display_name": "A/B Comparator (VideoFX) (Internode)",
+      "category": "Internode/VideoFX"
+    },
+    {
+      "name": "InternodeColorGrade",
+      "display_name": "Color Grade 3-Way (VideoFX) (Internode)",
+      "category": "Internode/VideoFX"
+    },
+    {
+      "name": "InternodeFilmGrain",
+      "display_name": "Film Grain / Overlay (VideoFX) (Internode)",
+      "category": "Internode/VideoFX"
+    },
+    {
+      "name": "InternodeGlitch",
+      "display_name": "Datamosh / Glitch (VideoFX) (Internode)",
+      "category": "Internode/VideoFX"
+    },
+    {
+      "name": "InternodeSpeedRamp",
+      "display_name": "Frame Speed Ramp (VideoFX) (Internode)",
+      "category": "Internode/VideoFX"
+    },
+    {
+      "name": "InternodeOpticalFlowInterpolator",
+      "display_name": "Video Frame Interpolator (VideoFX) (Internode)",
+      "category": "Internode/VideoFX"
+    },
+    {
+      "name": "InternodeMotionGlitch",
+      "display_name": "Motion Vector Glitch (VideoFX) (Internode)",
+      "category": "Internode/VideoFX"
+    },
+    {
+      "name": "InternodeBatchStyleTransfer",
+      "display_name": "Batch Style Transfer (VideoFX) (Internode)",
+      "category": "Internode/VideoFX"
+    },
+    {
+      "name": "InternodeAspectRatioSmart",
+      "display_name": "Smart Aspect Ratio & Crop (Internode)",
+      "category": "Internode/Image FX"
+    },
+    {
+      "name": "InternodeDetailEnhancer",
+      "display_name": "Image Detail Enhancer (Internode)",
+      "category": "Internode/Image FX"
+    },
+    {
+      "name": "InternodeDepthMapHF",
+      "display_name": "Depth Map Generator (HF) (Internode)",
+      "category": "Internode/Image FX"
+    },
+    {
+      "name": "InternodeColorMatch",
+      "display_name": "Color Match / Style Transfer (Internode)",
+      "category": "Internode/Image FX"
+    },
+    {
+      "name": "InternodeLFO",
+      "display_name": "LFO Generator (Internode)",
+      "category": "Internode/Control"
+    },
+    {
+      "name": "InternodeADSR",
+      "display_name": "ADSR Envelope (Internode)",
+      "category": "Internode/Control"
+    },
+    {
+      "name": "InternodeParamRemap",
+      "display_name": "Parameter Remapper (Internode)",
+      "category": "Internode/Control"
+    },
+    {
+      "name": "InternodeStringSequencer",
+      "display_name": "String Sequencer (Internode)",
+      "category": "Internode/Control"
     },
     {
       "name": "InternodeMarkdownNote",
-      "display_name": "Markdown Note (Internode)",
+      "display_name": "Markdown Note (Utils) (Internode)",
       "category": "Internode/Utils"
     },
     {
-      "name": "Internode_OpenWebUIServerConfig",
-      "display_name": "OpenWebUI Server Config (Internode)",
-      "category": "Internode/OpenWebUI"
+      "name": "InternodeStickyNote",
+      "display_name": "Sticky Note (Utils) (Internode)",
+      "category": "Internode/Utils"
     },
     {
-      "name": "Internode_OpenWebUINode",
-      "display_name": "OpenWebUI Unified (Internode)",
-      "category": "Internode/OpenWebUI"
+      "name": "InternodeAssetBrowser",
+      "display_name": "Asset Browser (Utils) (Internode)",
+      "category": "Internode/Utils"
     },
     {
-      "name": "Internode_OpenWebUIRefreshModels",
-      "display_name": "OpenWebUI Refresh Models (Internode)",
-      "category": "Internode/OpenWebUI"
+      "name": "InternodeMetadataInspector",
+      "display_name": "Metadata Inspector (Utils) (Internode)",
+      "category": "Internode/Utils"
     }
   ]
 }

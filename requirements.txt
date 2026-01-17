@@ -1,5 +1,5 @@
 # ComfyUI/custom_nodes/ComfyUI-Internode/requirements.txt
-# VERSION: 3.0.0
+# VERSION: 3.0.3
 
 requests
 transformers>=4.36.0
@@ -17,3 +17,4 @@ soundfile
 pydub
 pedalboard
 demucs
+mido

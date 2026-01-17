@@ -1,9 +1,26 @@
 // ComfyUI/custom_nodes/ComfyUI-Internode/js/internode_markdown.js
-// VERSION: 3.0.0
+// VERSION: 3.0.7
 
 import { app } from "../../scripts/app.js";
 
-console.log("%c#### Internode: Markdown UI v2.0 Loaded", "color: green; font-weight: bold;");
+console.log("%c#### Internode: Markdown UI v3.0.7 Loaded (Save Fix)", "color: green; font-weight: bold;");
+
+// --- CUSTOM SANITIZER ---
+function escapeHtml(unsafe) {
+    if (!unsafe) return "";
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function isValidUrl(url) {
+    url = url.trim();
+    if (url.toLowerCase().startsWith("javascript:")) return false;
+    return true;
+}
 
 function parseMarkdown(text) {
     if (!text) return "<span style='color:#666; font-style:italic;'>Empty...</span>";
@@ -28,8 +45,7 @@ function parseMarkdown(text) {
             continue;
         }
         if (inCodeBlock) {
-            line = line.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            html += line + '\n';
+            html += escapeHtml(line) + '\n';
             continue;
         }
 
@@ -42,7 +58,6 @@ function parseMarkdown(text) {
             tableRows.push(line);
             continue;
         } else if (inTable) {
-            // End of table, render it
             html += renderTable(tableRows);
             inTable = false;
             tableRows = [];
@@ -113,7 +128,6 @@ function parseMarkdown(text) {
         }
     }
 
-    // Handle table at end of input
     if (inTable && tableRows.length > 0) {
         html += renderTable(tableRows);
     }
@@ -122,14 +136,12 @@ function parseMarkdown(text) {
 }
 
 function renderTable(rows) {
-    if (rows.length < 2) return ''; // Need at least header + separator
+    if (rows.length < 2) return ''; 
     
     let html = '<table style="border-collapse:collapse; margin:16px 0; width:100%;">';
     
     for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
-        
-        // Skip separator row (contains only dashes and pipes)
         if (row.match(/^\|[\s\-:|]+\|$/)) continue;
         
         const cells = row.split('|').filter((cell, idx, arr) => idx > 0 && idx < arr.length - 1);
@@ -150,33 +162,25 @@ function renderTable(rows) {
 }
 
 function processInline(text) {
-    // Process in specific order to handle nesting better
+    text = escapeHtml(text);
+
+    text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, url) => {
+        if (!isValidUrl(url)) return ""; 
+        return `<img src="${url}" alt="${alt}" style="max-width:100%;">`;
+    });
     
-    // Escape HTML entities first
-    text = text.replace(/&(?![a-zA-Z]+;)/g, '&amp;');
+    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label, url) => {
+        if (!isValidUrl(url)) return label; 
+        return `<a href="${url}" target="_blank" style="color:#58a6ff; text-decoration:none;">${label}</a>`;
+    });
     
-    // Images (before links to avoid conflict)
-    text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;">');
-    
-    // Links
-    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:#58a6ff; text-decoration:none;">$1</a>');
-    
-    // Bold + Italic combined (***text*** or ___text___)
     text = text.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong style="color:#e6edf3;"><em>$1</em></strong>');
     text = text.replace(/___([^_]+)___/g, '<strong style="color:#e6edf3;"><em>$1</em></strong>');
-    
-    // Bold (**text** or __text__)
     text = text.replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#e6edf3;">$1</strong>');
     text = text.replace(/__([^_]+)__/g, '<strong style="color:#e6edf3;">$1</strong>');
-    
-    // Italic (*text* or _text_) - be careful not to match inside words
     text = text.replace(/(?<![a-zA-Z0-9])\*([^*]+)\*(?![a-zA-Z0-9])/g, '<em style="color:#e6edf3;">$1</em>');
     text = text.replace(/(?<![a-zA-Z0-9])_([^_]+)_(?![a-zA-Z0-9])/g, '<em style="color:#e6edf3;">$1</em>');
-    
-    // Strikethrough (~~text~~)
     text = text.replace(/~~([^~]+)~~/g, '<del style="color:#8b949e;">$1</del>');
-    
-    // Inline code (`code`) - process last to preserve content
     text = text.replace(/`([^`]+)`/g, '<code style="background:rgba(110,118,129,0.4); padding:2px 5px; border-radius:4px; font-family:monospace;">$1</code>');
     
     return text;
@@ -186,25 +190,68 @@ app.registerExtension({
     name: "Internode.MarkdownNode",
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
         if (nodeData.name === "InternodeMarkdownNote") {
+            
+            // --- FIX: Restore Persistence via onConfigure ---
+            const onConfigure = nodeType.prototype.onConfigure;
+            nodeType.prototype.onConfigure = function() {
+                if (onConfigure) onConfigure.apply(this, arguments);
+                
+                const textWidget = this._markdownGetWidget ? this._markdownGetWidget("text") : this.widgets?.find(w => w.name === "text");
+                if (textWidget && this.markdown_textarea) {
+                    // Force the widget value (loaded from JSON) into the UI
+                    this.markdown_textarea.value = textWidget.value;
+                    // Force an update of the preview if needed
+                    if (this.updateMarkdownState) this.updateMarkdownState();
+                }
+            };
+
             const onNodeCreated = nodeType.prototype.onNodeCreated;
             
             nodeType.prototype.onNodeCreated = function () {
                 const r = onNodeCreated ? onNodeCreated.apply(this, arguments) : undefined;
 
-                // 1. Locate and Hide Default Widget
-                const textWidget = this.widgets.find(w => w.name === "text");
-                if (textWidget) {
-                    textWidget.type = "custom";
-                    textWidget.computeSize = () => [0, 0];
-                    textWidget.draw = function() { return; }; 
+                // Store original widgets for Nodes 2.0 compatibility
+                if (!this._markdownOriginalWidgets) {
+                    this._markdownOriginalWidgets = this.widgets ? [...this.widgets] : [];
                 }
+                
+                const hideWidgets = () => {
+                    if (!this.widgets) return;
+                    const widgetsToKeep = [];
+                    const widgetsToHide = [];
+                    
+                    this.widgets.forEach(w => {
+                        if (w.name === "markdown_ui") {
+                            widgetsToKeep.push(w);
+                        } else {
+                            widgetsToHide.push(w);
+                            w.computeSize = () => [0, -4];
+                            if (w.element) w.element.style.display = "none";
+                        }
+                    });
+                    
+                    this.widgets = widgetsToKeep;
+                    this._markdownHiddenWidgets = widgetsToHide;
+                };
+                
+                if (!this._markdownGetWidget) {
+                    this._markdownGetWidget = (name) => {
+                        const visible = this.widgets ? this.widgets.find(w => w.name === name) : null;
+                        if (visible) return visible;
+                        const hidden = this._markdownHiddenWidgets ? this._markdownHiddenWidgets.find(w => w.name === name) : null;
+                        if (hidden) return hidden;
+                        return this._markdownOriginalWidgets ? this._markdownOriginalWidgets.find(w => w.name === name) : null;
+                    };
+                }
+
+                const textWidget = this._markdownOriginalWidgets.find(w => w.name === "text");
 
                 // 2. Main Container
                 const container = document.createElement("div");
                 Object.assign(container.style, {
                     height: "100%",
                     width: "100%",
-                    minHeight: "400px", // FORCE MINIMUM HEIGHT
+                    minHeight: "400px",
                     backgroundColor: "#0d1117",
                     border: "1px solid #30363d",
                     borderRadius: "6px",
@@ -252,12 +299,12 @@ app.registerExtension({
                 toolbar.appendChild(label);
                 toolbar.appendChild(toggleBtn);
 
-                // 4. Content Area (Holds Editor and Preview)
+                // 4. Content Area
                 const contentArea = document.createElement("div");
                 Object.assign(contentArea.style, {
                     width: "100%",
                     height: "calc(100% - 40px)",
-                    minHeight: "360px", // FORCE EDITOR MINIMUM HEIGHT
+                    minHeight: "360px", 
                     backgroundColor: "#0d1117",
                     position: "relative",
                     overflow: "hidden"
@@ -265,6 +312,10 @@ app.registerExtension({
 
                 // 5. Textarea (Edit Mode)
                 const textarea = document.createElement("textarea");
+                
+                // --- BINDING: Save reference for onConfigure ---
+                this.markdown_textarea = textarea;
+
                 Object.assign(textarea.style, {
                     width: "100%",
                     height: "100%",
@@ -281,6 +332,7 @@ app.registerExtension({
                     display: "block" 
                 });
                 
+                // Initialize from widget if available (for new nodes created via menu)
                 if(textWidget) textarea.value = textWidget.value;
 
                 // 6. Preview Div (Preview Mode)
@@ -302,7 +354,6 @@ app.registerExtension({
 
                 const updateState = () => {
                     if (isPreview) {
-                        // Show Preview
                         preview.innerHTML = parseMarkdown(textarea.value);
                         textarea.style.display = "none";
                         preview.style.display = "block";
@@ -311,7 +362,6 @@ app.registerExtension({
                         toggleBtn.style.backgroundColor = "#21262d"; 
                         toggleBtn.style.color = "#c9d1d9";
                     } else {
-                        // Show Edit
                         preview.style.display = "none";
                         textarea.style.display = "block";
                         
@@ -320,8 +370,11 @@ app.registerExtension({
                         toggleBtn.style.color = "#fff";
                     }
                 };
+                
+                // --- BINDING: Save update function ---
+                this.updateMarkdownState = updateState;
 
-                // Initialize in Edit Mode
+                // Initialize
                 updateState();
 
                 // Events
@@ -331,11 +384,11 @@ app.registerExtension({
                     updateState();
                 };
 
+                // Sync textarea input to the hidden widget
                 textarea.addEventListener("input", () => {
                     if(textWidget) textWidget.value = textarea.value;
                 });
 
-                // Stop events
                 const stopProp = (e) => e.stopPropagation();
                 textarea.addEventListener("mousedown", stopProp);
                 textarea.addEventListener("wheel", stopProp, {passive: true});
@@ -348,10 +401,43 @@ app.registerExtension({
                 container.appendChild(toolbar);
                 container.appendChild(contentArea);
 
-                this.addDOMWidget("markdown_ui", "div", container, { serialize: false });
+                const domWidget = this.addDOMWidget("markdown_ui", "div", container, { serialize: false });
+                domWidget.computedHeight = 700;
+                
+                hideWidgets();
+                this.markdownHideWidgets = hideWidgets;
 
-                // **UPDATED DEFAULT SIZE**
                 this.setSize([500, 700]);
+                this.resizable = true;
+                
+                // Override computeSize
+                this.computeSize = function(out) {
+                    let height = LiteGraph.NODE_TITLE_HEIGHT || 30;
+                    if (this.widgets) {
+                        for (let w of this.widgets) {
+                            if (w.name === "markdown_ui" && w.computedHeight) {
+                                height += w.computedHeight;
+                            }
+                        }
+                    }
+                    const width = this.size && this.size[0] > 500 ? this.size[0] : 500;
+                    const finalHeight = this.size && this.size[1] ? this.size[1] : height;
+                    if (out) {
+                        out[0] = width;
+                        out[1] = finalHeight;
+                        return out;
+                    }
+                    return [width, finalHeight];
+                };
+                
+                // Handle reconfiguration
+                const originalConfigure = this.configure;
+                this.configure = function(info) {
+                    originalConfigure?.apply(this, arguments);
+                    if (this.markdownHideWidgets) {
+                        requestAnimationFrame(() => this.markdownHideWidgets());
+                    }
+                };
                 
                 return r;
             };
