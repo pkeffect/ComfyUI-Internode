@@ -24,7 +24,7 @@ function isValidUrl(url) {
 
 function parseMarkdown(text) {
     if (!text) return "<span style='color:#666; font-style:italic;'>Empty...</span>";
-    
+
     const lines = text.split('\n');
     let html = '';
     let inCodeBlock = false;
@@ -73,7 +73,7 @@ function parseMarkdown(text) {
         if (line.startsWith('#')) {
             const level = line.match(/^#+/)[0].length;
             const content = line.slice(level).trim();
-            const size = 1.6 - (level * 0.1); 
+            const size = 1.6 - (level * 0.1);
             const border = level <= 2 ? 'border-bottom:1px solid #30363d; padding-bottom:0.3em;' : '';
             html += `<h${level} style="margin:20px 0 10px 0; font-size:${size}em; font-weight:600; color:#e6edf3; ${border}">${processInline(content)}</h${level}>`;
             continue;
@@ -112,7 +112,7 @@ function parseMarkdown(text) {
             const match = line.match(/^\s*[-*]\s+\[([ xX])\]\s+(.*)/);
             const checked = match[1].toLowerCase() === 'x';
             const content = match[2].trim();
-            const checkbox = checked 
+            const checkbox = checked
                 ? '<span style="color:#3fb950; margin-right:8px;">\u2611</span>'
                 : '<span style="color:#8b949e; margin-right:8px;">\u2610</span>';
             html += `<div style="display:flex; margin:4px 0;">
@@ -136,27 +136,27 @@ function parseMarkdown(text) {
 }
 
 function renderTable(rows) {
-    if (rows.length < 2) return ''; 
-    
+    if (rows.length < 2) return '';
+
     let html = '<table style="border-collapse:collapse; margin:16px 0; width:100%;">';
-    
+
     for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         if (row.match(/^\|[\s\-:|]+\|$/)) continue;
-        
+
         const cells = row.split('|').filter((cell, idx, arr) => idx > 0 && idx < arr.length - 1);
         const isHeader = i === 0;
         const tag = isHeader ? 'th' : 'td';
         const bgColor = isHeader ? '#161b22' : (i % 2 === 0 ? '#0d1117' : '#161b22');
         const fontWeight = isHeader ? 'font-weight:600;' : '';
-        
+
         html += '<tr>';
         for (const cell of cells) {
             html += `<${tag} style="border:1px solid #30363d; padding:8px 12px; background:${bgColor}; ${fontWeight}">${processInline(cell.trim())}</${tag}>`;
         }
         html += '</tr>';
     }
-    
+
     html += '</table>';
     return html;
 }
@@ -165,15 +165,15 @@ function processInline(text) {
     text = escapeHtml(text);
 
     text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, url) => {
-        if (!isValidUrl(url)) return ""; 
+        if (!isValidUrl(url)) return "";
         return `<img src="${url}" alt="${alt}" style="max-width:100%;">`;
     });
-    
+
     text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label, url) => {
-        if (!isValidUrl(url)) return label; 
+        if (!isValidUrl(url)) return label;
         return `<a href="${url}" target="_blank" style="color:#58a6ff; text-decoration:none;">${label}</a>`;
     });
-    
+
     text = text.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong style="color:#e6edf3;"><em>$1</em></strong>');
     text = text.replace(/___([^_]+)___/g, '<strong style="color:#e6edf3;"><em>$1</em></strong>');
     text = text.replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#e6edf3;">$1</strong>');
@@ -182,7 +182,7 @@ function processInline(text) {
     text = text.replace(/(?<![a-zA-Z0-9])_([^_]+)_(?![a-zA-Z0-9])/g, '<em style="color:#e6edf3;">$1</em>');
     text = text.replace(/~~([^~]+)~~/g, '<del style="color:#8b949e;">$1</del>');
     text = text.replace(/`([^`]+)`/g, '<code style="background:rgba(110,118,129,0.4); padding:2px 5px; border-radius:4px; font-family:monospace;">$1</code>');
-    
+
     return text;
 }
 
@@ -190,17 +190,13 @@ app.registerExtension({
     name: "Internode.MarkdownNode",
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
         if (nodeData.name === "InternodeMarkdownNote") {
-            
+
             // --- FIX: Restore Persistence via onConfigure ---
             const onConfigure = nodeType.prototype.onConfigure;
-            nodeType.prototype.onConfigure = function() {
+            nodeType.prototype.onConfigure = function () {
                 if (onConfigure) onConfigure.apply(this, arguments);
-                
-<<<<<<< HEAD
+
                 const textWidget = this._markdownGetWidget ? this._markdownGetWidget("text") : this.widgets?.find(w => w.name === "text");
-=======
-                const textWidget = this.widgets?.find(w => w.name === "text");
->>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
                 if (textWidget && this.markdown_textarea) {
                     // Force the widget value (loaded from JSON) into the UI
                     this.markdown_textarea.value = textWidget.value;
@@ -210,27 +206,20 @@ app.registerExtension({
             };
 
             const onNodeCreated = nodeType.prototype.onNodeCreated;
-            
+
             nodeType.prototype.onNodeCreated = function () {
                 const r = onNodeCreated ? onNodeCreated.apply(this, arguments) : undefined;
 
-<<<<<<< HEAD
                 // Store original widgets for Nodes 2.0 compatibility
                 if (!this._markdownOriginalWidgets) {
                     this._markdownOriginalWidgets = this.widgets ? [...this.widgets] : [];
-=======
-                const textWidget = this.widgets.find(w => w.name === "text");
-                if (textWidget) {
-                    textWidget.computeSize = () => [0, 0];
-                    textWidget.draw = function() { return; }; 
->>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
                 }
-                
+
                 const hideWidgets = () => {
                     if (!this.widgets) return;
                     const widgetsToKeep = [];
                     const widgetsToHide = [];
-                    
+
                     this.widgets.forEach(w => {
                         if (w.name === "markdown_ui") {
                             widgetsToKeep.push(w);
@@ -240,11 +229,11 @@ app.registerExtension({
                             if (w.element) w.element.style.display = "none";
                         }
                     });
-                    
+
                     this.widgets = widgetsToKeep;
                     this._markdownHiddenWidgets = widgetsToHide;
                 };
-                
+
                 if (!this._markdownGetWidget) {
                     this._markdownGetWidget = (name) => {
                         const visible = this.widgets ? this.widgets.find(w => w.name === name) : null;
@@ -269,7 +258,7 @@ app.registerExtension({
                     display: "flex",
                     flexDirection: "column",
                     boxSizing: "border-box",
-                    overflow: "hidden" 
+                    overflow: "hidden"
                 });
 
                 // 3. Toolbar (Top)
@@ -315,7 +304,7 @@ app.registerExtension({
                 Object.assign(contentArea.style, {
                     width: "100%",
                     height: "calc(100% - 40px)",
-                    minHeight: "360px", 
+                    minHeight: "360px",
                     backgroundColor: "#0d1117",
                     position: "relative",
                     overflow: "hidden"
@@ -323,7 +312,7 @@ app.registerExtension({
 
                 // 5. Textarea (Edit Mode)
                 const textarea = document.createElement("textarea");
-                
+
                 // --- BINDING: Save reference for onConfigure ---
                 this.markdown_textarea = textarea;
 
@@ -340,11 +329,11 @@ app.registerExtension({
                     lineHeight: "1.5",
                     outline: "none",
                     boxSizing: "border-box",
-                    display: "block" 
+                    display: "block"
                 });
-                
+
                 // Initialize from widget if available (for new nodes created via menu)
-                if(textWidget) textarea.value = textWidget.value;
+                if (textWidget) textarea.value = textWidget.value;
 
                 // 6. Preview Div (Preview Mode)
                 const preview = document.createElement("div");
@@ -357,31 +346,31 @@ app.registerExtension({
                     fontFamily: "sans-serif",
                     fontSize: "14px",
                     boxSizing: "border-box",
-                    display: "none" 
+                    display: "none"
                 });
 
                 // 7. Logic
-                let isPreview = false; 
+                let isPreview = false;
 
                 const updateState = () => {
                     if (isPreview) {
                         preview.innerHTML = parseMarkdown(textarea.value);
                         textarea.style.display = "none";
                         preview.style.display = "block";
-                        
+
                         toggleBtn.textContent = "\u270F\uFE0F Edit";
-                        toggleBtn.style.backgroundColor = "#21262d"; 
+                        toggleBtn.style.backgroundColor = "#21262d";
                         toggleBtn.style.color = "#c9d1d9";
                     } else {
                         preview.style.display = "none";
                         textarea.style.display = "block";
-                        
+
                         toggleBtn.textContent = "\uD83D\uDC41\uFE0F Preview";
-                        toggleBtn.style.backgroundColor = "#238636"; 
+                        toggleBtn.style.backgroundColor = "#238636";
                         toggleBtn.style.color = "#fff";
                     }
                 };
-                
+
                 // --- BINDING: Save update function ---
                 this.updateMarkdownState = updateState;
 
@@ -397,14 +386,14 @@ app.registerExtension({
 
                 // Sync textarea input to the hidden widget
                 textarea.addEventListener("input", () => {
-                    if(textWidget) textWidget.value = textarea.value;
+                    if (textWidget) textWidget.value = textarea.value;
                 });
 
                 const stopProp = (e) => e.stopPropagation();
                 textarea.addEventListener("mousedown", stopProp);
-                textarea.addEventListener("wheel", stopProp, {passive: true});
+                textarea.addEventListener("wheel", stopProp, { passive: true });
                 preview.addEventListener("mousedown", stopProp);
-                preview.addEventListener("wheel", stopProp, {passive: true});
+                preview.addEventListener("wheel", stopProp, { passive: true });
 
                 // Assemble
                 contentArea.appendChild(textarea);
@@ -414,15 +403,15 @@ app.registerExtension({
 
                 const domWidget = this.addDOMWidget("markdown_ui", "div", container, { serialize: false });
                 domWidget.computedHeight = 700;
-                
+
                 hideWidgets();
                 this.markdownHideWidgets = hideWidgets;
 
                 this.setSize([500, 700]);
                 this.resizable = true;
-                
+
                 // Override computeSize
-                this.computeSize = function(out) {
+                this.computeSize = function (out) {
                     let height = LiteGraph.NODE_TITLE_HEIGHT || 30;
                     if (this.widgets) {
                         for (let w of this.widgets) {
@@ -440,16 +429,16 @@ app.registerExtension({
                     }
                     return [width, finalHeight];
                 };
-                
+
                 // Handle reconfiguration
                 const originalConfigure = this.configure;
-                this.configure = function(info) {
+                this.configure = function (info) {
                     originalConfigure?.apply(this, arguments);
                     if (this.markdownHideWidgets) {
                         requestAnimationFrame(() => this.markdownHideWidgets());
                     }
                 };
-                
+
                 return r;
             };
         }

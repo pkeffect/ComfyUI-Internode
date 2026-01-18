@@ -143,7 +143,7 @@ class StudioInstance {
     constructor(container, widget) {
         this.root = container;
         this.widget = widget;
-        
+
         // Audio
         this.ctx = null;
         this.masterGain = null;
@@ -152,29 +152,21 @@ class StudioInstance {
             bot: { nodes: {}, active: {}, analyser: null }
         };
         this.activeNotes = {};
-        
+
         // System State
         this.sys = {
             top: { octave: 0, wave: '0', cutoff: 20000, res: 0, vol: 0.7 },
             bot: { octave: 0, wave: '1', cutoff: 20000, res: 0, vol: 0.7 }
         };
 
-<<<<<<< HEAD
-        if(widget?.value && widget.value !== "{}") {
-=======
-        if(widget && widget.value && widget.value !== "{}") {
->>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
+        if (widget?.value && widget.value !== "{}") {
             try {
                 const saved = JSON.parse(widget.value);
                 Object.assign(this.sys.top, saved.top);
                 Object.assign(this.sys.bot, saved.bot);
-<<<<<<< HEAD
-            } catch(e) {
+            } catch (e) {
                 console.warn("Failed to parse state:", e);
             }
-=======
-            } catch(e) {}
->>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
         }
 
         this.init();
@@ -183,7 +175,7 @@ class StudioInstance {
     init() {
         this.renderLayout();
         this.initUI();
-        
+
         const pwr = this.root.querySelector('.power-btn');
         pwr.onclick = async () => {
             await this.initAudio();
@@ -237,10 +229,10 @@ class StudioInstance {
                         <div class="module">
                             <div class="module-label">OSC ENGINE</div>
                             <div class="grid-2x4">
-                                <button class="wave-btn ${this.sys.top.wave==0?'active':''}" data-deck="top" data-val="0">SAW</button>
-                                <button class="wave-btn ${this.sys.top.wave==1?'active':''}" data-deck="top" data-val="1">SQR</button>
-                                <button class="wave-btn ${this.sys.top.wave==2?'active':''}" data-deck="top" data-val="2">TRI</button>
-                                <button class="wave-btn ${this.sys.top.wave==3?'active':''}" data-deck="top" data-val="3">SIN</button>
+                                <button class="wave-btn ${this.sys.top.wave == 0 ? 'active' : ''}" data-deck="top" data-val="0">SAW</button>
+                                <button class="wave-btn ${this.sys.top.wave == 1 ? 'active' : ''}" data-deck="top" data-val="1">SQR</button>
+                                <button class="wave-btn ${this.sys.top.wave == 2 ? 'active' : ''}" data-deck="top" data-val="2">TRI</button>
+                                <button class="wave-btn ${this.sys.top.wave == 3 ? 'active' : ''}" data-deck="top" data-val="3">SIN</button>
                                 <div class="knob-unit"><div class="knob" data-deck="top" data-param="sub"></div><label>MOD</label></div>
                                 <div class="knob-unit"><div class="knob" data-deck="top" data-param="noise"></div><label>COL</label></div>
                                 <div class="knob-unit"><div class="knob" data-deck="top" data-param="detune"></div><label>VAR</label></div>
@@ -323,10 +315,10 @@ class StudioInstance {
                         <!-- Same modules as top but for bot -->
                         <div class="module"><div class="module-label">OSC ENGINE</div>
                             <div class="grid-2x4">
-                                <button class="wave-btn ${this.sys.bot.wave==0?'active':''}" data-deck="bot" data-val="0">SAW</button>
-                                <button class="wave-btn ${this.sys.bot.wave==1?'active':''}" data-deck="bot" data-val="1">SQR</button>
-                                <button class="wave-btn ${this.sys.bot.wave==2?'active':''}" data-deck="bot" data-val="2">TRI</button>
-                                <button class="wave-btn ${this.sys.bot.wave==3?'active':''}" data-deck="bot" data-val="3">SIN</button>
+                                <button class="wave-btn ${this.sys.bot.wave == 0 ? 'active' : ''}" data-deck="bot" data-val="0">SAW</button>
+                                <button class="wave-btn ${this.sys.bot.wave == 1 ? 'active' : ''}" data-deck="bot" data-val="1">SQR</button>
+                                <button class="wave-btn ${this.sys.bot.wave == 2 ? 'active' : ''}" data-deck="bot" data-val="2">TRI</button>
+                                <button class="wave-btn ${this.sys.bot.wave == 3 ? 'active' : ''}" data-deck="bot" data-val="3">SIN</button>
                                 <div class="knob-unit"><div class="knob"></div><label>MOD</label></div>
                                 <div class="knob-unit"><div class="knob"></div><label>COL</label></div>
                                 <div class="knob-unit"><div class="knob"></div><label>VAR</label></div>
@@ -385,19 +377,15 @@ class StudioInstance {
     }
 
     async initAudio() {
-<<<<<<< HEAD
         this.ctx = new (globalThis.AudioContext || globalThis.webkitAudioContext)();
-=======
-        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
->>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
-        if(this.ctx.state === 'suspended') await this.ctx.resume();
-        
+        if (this.ctx.state === 'suspended') await this.ctx.resume();
+
         // Master Chain
         this.analyser = this.ctx.createAnalyser(); this.analyser.fftSize = 2048;
         this.masterGain = this.ctx.createGain(); this.masterGain.gain.value = 0.6;
         this.masterGain.connect(this.analyser);
         this.analyser.connect(this.ctx.destination);
-        
+
         this.setupDeck('top');
         this.setupDeck('bot');
         this.startMetersLoop();
@@ -408,10 +396,10 @@ class StudioInstance {
         d.analyser = this.ctx.createAnalyser();
         d.nodes.main = this.ctx.createGain(); d.nodes.main.gain.value = 0.7;
         d.nodes.voiceSum = this.ctx.createGain();
-        
+
         d.nodes.filter = this.ctx.createBiquadFilter();
         d.nodes.filter.type = 'lowpass'; d.nodes.filter.frequency.value = 20000;
-        
+
         // Correct Chain: VoiceSum -> Filter -> Main -> Analyser -> Master
         d.nodes.voiceSum.connect(d.nodes.filter);
         d.nodes.filter.connect(d.nodes.main);
@@ -420,28 +408,24 @@ class StudioInstance {
     }
 
     playNote(midi, deck) {
-        if(!this.ctx) return;
+        if (!this.ctx) return;
         const id = `${deck}-${midi}`;
-        if(this.activeNotes[id]) this.stopNote(midi, deck);
-        
+        if (this.activeNotes[id]) this.stopNote(midi, deck);
+
         const freq = 440 * Math.pow(2, (midi - 69) / 12);
         const osc = this.ctx.createOscillator();
         const types = ['sawtooth', 'square', 'triangle', 'sine'];
-<<<<<<< HEAD
         osc.type = types[Number.parseInt(this.sys[deck].wave)];
-=======
-        osc.type = types[parseInt(this.sys[deck].wave)];
->>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
         osc.frequency.value = freq;
-        
+
         const env = this.ctx.createGain();
         env.gain.setValueAtTime(0, this.ctx.currentTime);
         env.gain.linearRampToValueAtTime(1, this.ctx.currentTime + 0.05);
         env.gain.setTargetAtTime(0.5, this.ctx.currentTime + 0.05, 0.2); // Decay to Sustain
-        
+
         osc.connect(env);
         env.connect(this.decks[deck].nodes.voiceSum); // Connect to deck input
-        
+
         osc.start();
         this.activeNotes[id] = { osc, env };
         this.saveState();
@@ -449,8 +433,8 @@ class StudioInstance {
 
     stopNote(midi, deck) {
         const id = `${deck}-${midi}`;
-        if(!this.activeNotes[id]) return;
-        
+        if (!this.activeNotes[id]) return;
+
         const { osc, env } = this.activeNotes[id];
         const t = this.ctx.currentTime;
         env.gain.cancelScheduledValues(t);
@@ -463,44 +447,36 @@ class StudioInstance {
     initUI() {
         this.renderKeys('manual-top', 'top', 48);
         this.renderKeys('manual-bottom', 'bot', 36);
-        
+
         // Knobs Logic
         this.root.querySelectorAll('.knob').forEach(k => {
             let val = 0.5;
-<<<<<<< HEAD
-            if(k.dataset.param === 'cutoff') val = 1;
-            k.style.transform = `rotate(${(val*270)-135}deg)`;
+            if (k.dataset.param === 'cutoff') val = 1;
+            k.style.transform = `rotate(${(val * 270) - 135}deg)`;
             k.onmousedown = (e) => {
                 const sy = e.clientY;
-                const startDeg = Number.parseFloat(k.style.transform.replaceAll(/[^\d.-]/g,''))||-135;
-=======
-            if(k.dataset.param === 'cutoff') val = 1.0;
-            k.style.transform = `rotate(${(val*270)-135}deg)`;
-            k.onmousedown = (e) => {
-                const sy = e.clientY;
-                const startDeg = parseFloat(k.style.transform.replace(/[^\d.-]/g,''))||-135;
->>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
+                const startDeg = Number.parseFloat(k.style.transform.replaceAll(/[^\d.-]/g, '')) || -135;
                 const move = (ev) => {
-                    let d = startDeg + (sy - ev.clientY)*2.5;
+                    let d = startDeg + (sy - ev.clientY) * 2.5;
                     d = Math.max(-135, Math.min(135, d));
                     k.style.transform = `rotate(${d}deg)`;
-                    
+
                     const deck = k.dataset.deck || k.dataset.type;
                     const param = k.dataset.param;
-                    const norm = (d+135)/270;
-                    
-                    if(deck === 'master' && param === 'vol') this.masterGain.gain.value = norm;
-                    if((deck=='top'||deck=='bot')) {
-                        if(param=='cutoff') {
-                            this.sys[deck].cutoff = 20 + (norm*20000);
-                            if(this.decks[deck].nodes.filter) 
+                    const norm = (d + 135) / 270;
+
+                    if (deck === 'master' && param === 'vol') this.masterGain.gain.value = norm;
+                    if ((deck == 'top' || deck == 'bot')) {
+                        if (param == 'cutoff') {
+                            this.sys[deck].cutoff = 20 + (norm * 20000);
+                            if (this.decks[deck].nodes.filter)
                                 this.decks[deck].nodes.filter.frequency.setTargetAtTime(this.sys[deck].cutoff, this.ctx.currentTime, 0.1);
                         }
                     }
                     this.saveState();
                 };
-                const up = () => { window.removeEventListener('mousemove',move); window.removeEventListener('mouseup',up); };
-                window.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
+                const up = () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); };
+                window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
             }
         });
 
@@ -508,21 +484,21 @@ class StudioInstance {
         this.root.querySelectorAll('.wave-btn[data-val]').forEach(b => {
             b.onclick = () => {
                 const d = b.dataset.deck;
-                this.root.querySelectorAll(`.wave-btn[data-deck="${d}"][data-val]`).forEach(x=>x.classList.remove('active'));
+                this.root.querySelectorAll(`.wave-btn[data-deck="${d}"][data-val]`).forEach(x => x.classList.remove('active'));
                 b.classList.add('active');
                 this.sys[d].wave = b.dataset.val;
                 this.saveState();
             };
         });
-        
+
         // Octave Buttons
         this.root.querySelectorAll('.wave-btn[data-action]').forEach(b => {
             b.onclick = () => {
                 const d = b.dataset.deck;
-                if(b.dataset.action === 'up' && this.sys[d].octave < 2) this.sys[d].octave++;
-                if(b.dataset.action === 'down' && this.sys[d].octave > -2) this.sys[d].octave--;
+                if (b.dataset.action === 'up' && this.sys[d].octave < 2) this.sys[d].octave++;
+                if (b.dataset.action === 'down' && this.sys[d].octave > -2) this.sys[d].octave--;
                 this.root.querySelector(`#disp-${d}`).textContent = this.sys[d].octave;
-                this.renderKeys(d==='top'?'manual-top':'manual-bottom', d, d==='top'?48:36); // Re-render to update MIDI mapping
+                this.renderKeys(d === 'top' ? 'manual-top' : 'manual-bottom', d, d === 'top' ? 48 : 36); // Re-render to update MIDI mapping
                 this.saveState();
             }
         });
@@ -530,31 +506,31 @@ class StudioInstance {
 
     renderKeys(id, deck, startMidi) {
         const cont = this.root.querySelector(`#${id}`);
-        if(!cont) return;
-        cont.innerHTML = ''; 
-        const numKeys = 49; 
-        const wWidth = 100 / 29; 
+        if (!cont) return;
+        cont.innerHTML = '';
+        const numKeys = 49;
+        const wWidth = 100 / 29;
         let wIdx = 0;
-        
+
         // Octave Shift Logic
         const shift = this.sys[deck].octave * 12;
-        
-        for(let i=0; i<numKeys; i++){
-            const m = startMidi + i; 
+
+        for (let i = 0; i < numKeys; i++) {
+            const m = startMidi + i;
             const n = m % 12;
-            const isBlk = [1,3,6,8,10].includes(n);
+            const isBlk = [1, 3, 6, 8, 10].includes(n);
             const k = document.createElement('div');
-            
+
             k.onmousedown = (e) => { e.preventDefault(); k.classList.add('active'); this.playNote(m + shift, deck); };
             k.onmouseup = k.onmouseleave = (e) => { e.preventDefault(); k.classList.remove('active'); this.stopNote(m + shift, deck); };
-            
-            if(isBlk) {
+
+            if (isBlk) {
                 k.className = 'key black';
                 k.style.width = (wWidth * 0.65) + '%';
-                k.style.left = ((wIdx * wWidth) - (wWidth * 0.325)) + '%'; 
+                k.style.left = ((wIdx * wWidth) - (wWidth * 0.325)) + '%';
             } else {
-                k.className = 'key white'; 
-                k.style.width = wWidth + '%'; 
+                k.className = 'key white';
+                k.style.width = wWidth + '%';
                 k.style.left = (wIdx * wWidth) + '%';
                 wIdx++;
             }
@@ -565,33 +541,33 @@ class StudioInstance {
     startMetersLoop() {
         const draw = (cid, an) => {
             const cvs = this.root.querySelector(`#${cid}`);
-            if(!cvs || !an) return;
+            if (!cvs || !an) return;
             const ctx = cvs.getContext('2d');
             const w = cvs.width, h = cvs.height;
-            ctx.clearRect(0,0,w,h);
-            ctx.fillStyle = '#111'; ctx.fillRect(0,0,w,h);
-            
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = '#111'; ctx.fillRect(0, 0, w, h);
+
             const data = new Uint8Array(2048);
             an.getByteTimeDomainData(data);
-            let sum=0; for(let i=0;i<data.length;i++){ const v=(data[i]-128)/128; sum+=v*v; }
-            const rms = Math.sqrt(sum/data.length);
-            
+            let sum = 0; for (let i = 0; i < data.length; i++) { const v = (data[i] - 128) / 128; sum += v * v; }
+            const rms = Math.sqrt(sum / data.length);
+
             // Segmented Meter
-            const segs = 20; const gap = 2; const sH = (h - (segs*gap))/segs;
+            const segs = 20; const gap = 2; const sH = (h - (segs * gap)) / segs;
             const lit = Math.floor(rms * 50); // Sensitivity
-            
-            for(let i=0; i<segs; i++) {
-                const idx = segs - 1 - i; 
+
+            for (let i = 0; i < segs; i++) {
+                const idx = segs - 1 - i;
                 const isLit = lit > idx;
                 let col = '#0f0';
-                if(i < 4) col = '#f00'; 
-                else if(i < 9) col = '#ff0';
-                
+                if (i < 4) col = '#f00';
+                else if (i < 9) col = '#ff0';
+
                 ctx.fillStyle = isLit ? col : '#222';
-                ctx.fillRect(2, i*(sH+gap), w-4, sH);
+                ctx.fillRect(2, i * (sH + gap), w - 4, sH);
             }
         };
-        
+
         const loop = () => {
             draw('vu-master', this.analyser);
             draw('vu-top', this.decks.top.analyser);
@@ -602,7 +578,7 @@ class StudioInstance {
     }
 
     saveState() {
-        if(this.widget) this.widget.value = JSON.stringify(this.sys);
+        if (this.widget) this.widget.value = JSON.stringify(this.sys);
     }
 }
 
@@ -614,20 +590,19 @@ app.registerExtension({
             const onNodeCreated = nodeType.prototype.onNodeCreated;
             nodeType.prototype.onNodeCreated = function () {
                 const r = onNodeCreated ? onNodeCreated.apply(this, arguments) : undefined;
-                
+
                 injectStyles();
-                
-<<<<<<< HEAD
+
                 // Store original widgets for Nodes 2.0 compatibility
                 if (!this._studioOriginalWidgets) {
                     this._studioOriginalWidgets = this.widgets ? [...this.widgets] : [];
                 }
-                
+
                 const hideWidgets = () => {
                     if (!this.widgets) return;
                     const widgetsToKeep = [];
                     const widgetsToHide = [];
-                    
+
                     this.widgets.forEach(w => {
                         if (w.name === "studio_ui") {
                             widgetsToKeep.push(w);
@@ -637,11 +612,11 @@ app.registerExtension({
                             if (w.element) w.element.style.display = "none";
                         }
                     });
-                    
+
                     this.widgets = widgetsToKeep;
                     this._studioHiddenWidgets = widgetsToHide;
                 };
-                
+
                 if (!this._studioGetWidget) {
                     this._studioGetWidget = (name) => {
                         const visible = this.widgets ? this.widgets.find(w => w.name === name) : null;
@@ -651,30 +626,25 @@ app.registerExtension({
                         return this._studioOriginalWidgets ? this._studioOriginalWidgets.find(w => w.name === name) : null;
                     };
                 }
-                
+
                 const widget = this._studioOriginalWidgets.find(w => w.name === "ui_state");
-=======
-                const widget = this.widgets.find(w => w.name === "ui_state");
-                if (widget) { widget.type = "custom"; widget.computeSize = () => [0, -4]; }
->>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
 
                 const container = document.createElement("div");
                 container.className = "internode-studio-root";
-                
+
                 new StudioInstance(container, widget);
-                
-<<<<<<< HEAD
+
                 const domWidget = this.addDOMWidget("studio_ui", "div", container, { serialize: false });
                 domWidget.computedHeight = 600;
-                
+
                 hideWidgets();
                 this.studioHideWidgets = hideWidgets;
-                
+
                 this.setSize([900, 600]);
                 this.resizable = true;
-                
+
                 // Override computeSize
-                this.computeSize = function(out) {
+                this.computeSize = function (out) {
                     let height = LiteGraph.NODE_TITLE_HEIGHT || 30;
                     if (this.widgets) {
                         for (let w of this.widgets) {
@@ -692,20 +662,15 @@ app.registerExtension({
                     }
                     return [width, finalHeight];
                 };
-                
+
                 // Handle reconfiguration
                 const originalConfigure = this.configure;
-                this.configure = function(info) {
+                this.configure = function (info) {
                     originalConfigure?.apply(this, arguments);
                     if (this.studioHideWidgets) {
                         requestAnimationFrame(() => this.studioHideWidgets());
                     }
                 };
-                
-=======
-                this.addDOMWidget("studio_ui", "div", container, { serialize: false });
-                this.setSize([900, 600]); 
->>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
                 return r;
             };
         }

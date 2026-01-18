@@ -20,21 +20,21 @@ function parseMarkdown(text, color) {
     if (!text) return "";
     const lines = text.split('\n');
     let html = '';
-    
+
     // Adjust header border color based on text color intensity
     const borderColor = (color === '#ffffff' || color === '#eeeeee') ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)';
 
     for (let i = 0; i < lines.length; i++) {
         let line = lines[i];
-        
+
         // Headers
         if (line.startsWith('#')) {
             const level = line.match(/^#+/)[0].length;
             const content = line.slice(level).trim();
-            html += `<div style="font-weight:800; font-size:${1.4 - (level*0.1)}em; margin-bottom:4px; opacity: 0.9; border-bottom:1px dashed ${borderColor};">${escapeHtml(content)}</div>`;
+            html += `<div style="font-weight:800; font-size:${1.4 - (level * 0.1)}em; margin-bottom:4px; opacity: 0.9; border-bottom:1px dashed ${borderColor};">${escapeHtml(content)}</div>`;
             continue;
         }
-        
+
         // Lists
         if (line.match(/^\s*[-*]\s+(.*)/)) {
             const content = line.replace(/^\s*[-*]\s+/, '').trim();
@@ -57,7 +57,7 @@ function parseMarkdown(text, color) {
 
 function processInline(text) {
     text = escapeHtml(text);
-    text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>'); 
+    text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
     text = text.replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.1); padding:0 4px; border-radius:3px; font-family:monospace; font-size:0.9em;">$1</code>');
     return text;
@@ -66,37 +66,31 @@ function processInline(text) {
 const COLOR_MAP = {
     // Backgrounds
     "Yellow": ["#fff740", "#ffff88"],
-    "Green":  ["#b3ff66", "#d9ffb3"],
-    "Pink":   ["#ff99cc", "#ffcce5"],
+    "Green": ["#b3ff66", "#d9ffb3"],
+    "Pink": ["#ff99cc", "#ffcce5"],
     "Orange": ["#ffcc66", "#ffe6b3"],
-    "Blue":   ["#66ccff", "#b3e6ff"],
-    "White":  ["#f0f0f0", "#ffffff"],
-    
+    "Blue": ["#66ccff", "#b3e6ff"],
+    "White": ["#f0f0f0", "#ffffff"],
+
     // Text Colors
     "Black": "#222222",
-    "Gray":  "#555555",
+    "Gray": "#555555",
     "White": "#ffffff",
-    "Red":   "#cc0000",
-    "Blue":  "#0033cc"
+    "Red": "#cc0000",
+    "Blue": "#0033cc"
 };
 
 app.registerExtension({
     name: "Internode.StickyNote",
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
         if (nodeData.name === "InternodeStickyNote") {
-            
+
             const onConfigure = nodeType.prototype.onConfigure;
-            nodeType.prototype.onConfigure = function() {
+            nodeType.prototype.onConfigure = function () {
                 if (onConfigure) onConfigure.apply(this, arguments);
-<<<<<<< HEAD
                 const textWidget = this._stickyGetWidget ? this._stickyGetWidget("text") : this.widgets?.find(w => w.name === "text");
                 const colorWidget = this._stickyGetWidget ? this._stickyGetWidget("note_color") : this.widgets?.find(w => w.name === "note_color");
                 const fontWidget = this._stickyGetWidget ? this._stickyGetWidget("text_color") : this.widgets?.find(w => w.name === "text_color");
-=======
-                const textWidget = this.widgets?.find(w => w.name === "text");
-                const colorWidget = this.widgets?.find(w => w.name === "note_color");
-                const fontWidget = this.widgets?.find(w => w.name === "text_color");
->>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
 
                 if (this.sticky_ui) {
                     if (textWidget) this.sticky_ui.textarea.value = textWidget.value;
@@ -113,17 +107,16 @@ app.registerExtension({
             nodeType.prototype.onNodeCreated = function () {
                 const r = onNodeCreated ? onNodeCreated.apply(this, arguments) : undefined;
 
-<<<<<<< HEAD
                 // Store original widgets for Nodes 2.0 compatibility
                 if (!this._stickyOriginalWidgets) {
                     this._stickyOriginalWidgets = this.widgets ? [...this.widgets] : [];
                 }
-                
+
                 const hideWidgets = () => {
                     if (!this.widgets) return;
                     const widgetsToKeep = [];
                     const widgetsToHide = [];
-                    
+
                     this.widgets.forEach(w => {
                         if (w.name === "sticky_ui") {
                             widgetsToKeep.push(w);
@@ -133,11 +126,11 @@ app.registerExtension({
                             if (w.element) w.element.style.display = "none";
                         }
                     });
-                    
+
                     this.widgets = widgetsToKeep;
                     this._stickyHiddenWidgets = widgetsToHide;
                 };
-                
+
                 if (!this._stickyGetWidget) {
                     this._stickyGetWidget = (name) => {
                         const visible = this.widgets ? this.widgets.find(w => w.name === name) : null;
@@ -151,21 +144,6 @@ app.registerExtension({
                 const textWidget = this._stickyOriginalWidgets.find(w => w.name === "text");
                 const noteColorWidget = this._stickyOriginalWidgets.find(w => w.name === "note_color");
                 const textColorWidget = this._stickyOriginalWidgets.find(w => w.name === "text_color");
-=======
-                // Helper to hide but keep widgets
-                const hideWidget = (name) => {
-                    const w = this.widgets.find(wid => wid.name === name);
-                    if (w) {
-                        w.computeSize = () => [0, 0];
-                        w.draw = function() { return; };
-                    }
-                    return w;
-                };
-
-                const textWidget = hideWidget("text");
-                const noteColorWidget = hideWidget("note_color");
-                const textColorWidget = hideWidget("text_color");
->>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
 
                 // 1. Root Container
                 const root = document.createElement("div");
@@ -189,7 +167,7 @@ app.registerExtension({
                     display: "flex", justifyContent: "flex-end",
                     padding: "0 5px", boxSizing: "border-box", cursor: "move"
                 });
-                
+
                 const toggleBtn = document.createElement("div");
                 toggleBtn.textContent = "✎";
                 Object.assign(toggleBtn.style, {
@@ -211,7 +189,7 @@ app.registerExtension({
                     fontFamily: "monospace", fontSize: "12px",
                     boxSizing: "border-box"
                 });
-                if(textWidget) textarea.value = textWidget.value;
+                if (textWidget) textarea.value = textWidget.value;
 
                 const preview = document.createElement("div");
                 Object.assign(preview.style, {
@@ -226,12 +204,12 @@ app.registerExtension({
                 const applyTheme = (bgColorName, textColorName) => {
                     const bg = COLOR_MAP[bgColorName] || COLOR_MAP["Yellow"];
                     const txt = COLOR_MAP[textColorName] || "#222";
-                    
+
                     root.style.backgroundColor = bg[0];
                     root.style.backgroundImage = `linear-gradient(to bottom right, ${bg[1]}, ${bg[0]})`;
                     root.style.color = txt;
                     currentTextColor = txt;
-                    
+
                     // Re-render markdown to update border colors
                     if (preview.style.display !== "none") {
                         preview.innerHTML = parseMarkdown(textarea.value, currentTextColor);
@@ -264,7 +242,7 @@ app.registerExtension({
                 toggleBtn.onclick = () => { isPreview = !isPreview; updateState(); };
 
                 textarea.addEventListener("input", () => {
-                    if(textWidget) textWidget.value = textarea.value;
+                    if (textWidget) textWidget.value = textarea.value;
                 });
 
                 // Listen for property changes in ComfyUI Panel
@@ -281,25 +259,21 @@ app.registerExtension({
 
                 const stop = (e) => e.stopPropagation();
                 textarea.addEventListener("mousedown", stop);
-                textarea.addEventListener("wheel", stop, {passive: true});
+                textarea.addEventListener("wheel", stop, { passive: true });
                 preview.addEventListener("mousedown", stop);
-                preview.addEventListener("wheel", stop, {passive: true});
+                preview.addEventListener("wheel", stop, { passive: true });
 
                 contentArea.appendChild(textarea);
                 contentArea.appendChild(preview);
                 root.appendChild(toolbar);
                 root.appendChild(contentArea);
 
-<<<<<<< HEAD
                 const domWidget = this.addDOMWidget("sticky_ui", "div", root, { serialize: false });
                 domWidget.computedHeight = 220;
-                
+
                 hideWidgets();
                 this.stickyHideWidgets = hideWidgets;
-=======
-                this.addDOMWidget("sticky_ui", "div", root, { serialize: false });
->>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
-                
+
                 // Expose methods for onConfigure
                 this.sticky_ui = {
                     textarea: textarea,
@@ -308,11 +282,10 @@ app.registerExtension({
                 };
 
                 this.setSize([220, 220]);
-<<<<<<< HEAD
                 this.resizable = true;
-                
+
                 // Override computeSize
-                this.computeSize = function(out) {
+                this.computeSize = function (out) {
                     let height = LiteGraph.NODE_TITLE_HEIGHT || 30;
                     if (this.widgets) {
                         for (let w of this.widgets) {
@@ -330,18 +303,16 @@ app.registerExtension({
                     }
                     return [width, finalHeight];
                 };
-                
+
                 // Handle reconfiguration
                 const originalConfigure = this.configure;
-                this.configure = function(info) {
+                this.configure = function (info) {
                     originalConfigure?.apply(this, arguments);
                     if (this.stickyHideWidgets) {
                         requestAnimationFrame(() => this.stickyHideWidgets());
                     }
                 };
-                
-=======
->>>>>>> 402770905de74eb3ee18465e48f6c336d49e71ff
+
                 return r;
             };
         }
