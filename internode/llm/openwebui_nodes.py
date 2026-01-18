@@ -52,19 +52,35 @@ def get_cached_models(host, api_key):
     if _model_cache["models"] is not None and (now - _model_cache["timestamp"]) < _model_cache["ttl"]:
         return _model_cache["models"]
     
+    
+    # Fast exit if no API key/Host mismatch to avoid spamming 401s
+    if not api_key and "localhost" not in host and "127.0.0.1" not in host:
+         return ["config_missing"]
+
     model_list = []
     try:
-        if api_key or "localhost" in host or "127.0.0.1" in host:
-            api = OpenWebUIAPI(host=host, api_key=api_key)
-            model_list = api.get_models()
+        # Debounce/Suppress repetitive errors
+        if _model_cache.get("error_count", 0) > 3 and (now - _model_cache.get("last_error_time", 0)) < 60:
+             return ["check_connection"]
+             
+        api = OpenWebUIAPI(host=host, api_key=api_key)
+        model_list = api.get_models()
+        
         if model_list:
             _model_cache["models"] = model_list
             _model_cache["timestamp"] = now
+            _model_cache["error_count"] = 0 # Reset on success
+            
     except Exception as e:
-        print(f"#### Internode Model Fetch Error: {e}")
+        _model_cache["error_count"] = _model_cache.get("error_count", 0) + 1
+        _model_cache["last_error_time"] = now
+        # Only log the first few errors to avoid console flood
+        if _model_cache["error_count"] <= 1:
+            print(f"#### Internode Model Fetch Warning: {e}")
+        
         if _model_cache["models"]: return _model_cache["models"]
     
-    if not model_list: model_list = ["default"]
+    if not model_list: model_list = ["manual_input_only"]
     return model_list
 
 def tensor_to_pil(img):

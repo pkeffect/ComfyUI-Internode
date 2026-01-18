@@ -49,9 +49,7 @@ class MixerAudioEngine {
     }
 
     init() {
-        if (!this.ctx) {
-            this.ctx = new (globalThis.AudioContext || globalThis.webkitAudioContext)();
-        }
+        this.ctx = new (globalThis.AudioContext || globalThis.webkitAudioContext)();
     }
 
     async loadTrack(url) {

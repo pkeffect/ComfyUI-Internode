@@ -9,9 +9,9 @@ console.log("%c#### Internode: Loaders UI v4.0.0 Loaded", "color: cyan; font-wei
 app.registerExtension({
     name: "Internode.Loaders",
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
-        
+
         const loaderTypes = ["InternodeAudioLoader", "InternodeVideoLoader", "InternodeImageLoader"];
-        
+
         if (loaderTypes.includes(nodeData.name)) {
 
             let widgetName = "audio_file";
@@ -28,21 +28,14 @@ app.registerExtension({
                 typeLabel = "Image";
             }
 
-            const updateNodeTitle = (node, widget) => {
-                const val = widget.value;
-                if (val && val !== "none") {
-                    node.title = `${typeLabel}: ${val.split('/').pop()}`;
-                } else {
-                    node.title = `${typeLabel} Loader`;
-                }
-            };
+
 
             const onNodeCreated = nodeType.prototype.onNodeCreated;
             nodeType.prototype.onNodeCreated = function () {
                 const r = onNodeCreated ? onNodeCreated.apply(this, arguments) : undefined;
 
                 const fileWidget = this.widgets.find(w => w.name === widgetName);
-                if(fileWidget) {
+                if (fileWidget) {
                     fileWidget.type = "custom";
                     fileWidget.computeSize = () => [0, -4];
                 }
@@ -82,7 +75,7 @@ app.registerExtension({
                         wrapper.appendChild(audio);
                         previewCtx.appendChild(wrapper);
                     }
-                    node.title = `${typeLabel}: ${filename}`;
+                    this.title = `${typeLabel}: ${filename}`;
                 };
 
                 const handleFile = async (file) => {
@@ -90,42 +83,47 @@ app.registerExtension({
                     try {
                         previewCtx.innerHTML = '<span style="color:#0af; font-size:12px;">Uploading...</span>';
                         const formData = new FormData();
-                        formData.append('image', file); formData.append('overwrite', 'true');
+                        formData.append('image', file);
+                        formData.append('overwrite', 'false'); // Avoid Windows file locking issues
+
                         const resp = await api.fetchApi("/upload/image", { method: "POST", body: formData });
                         if (resp.status === 200) {
                             const data = await resp.json();
-                            if(fileWidget) {
+                            if (fileWidget) {
                                 fileWidget.value = data.name;
                                 this.updatePreview(data.name);
                             }
                         } else {
-                            alert(`Upload failed: ${resp.statusText}`);
-                            previewCtx.innerHTML = '<span style="color:#f55;">Upload Failed</span>';
+                            previewCtx.innerHTML = `<span style="color:#f55; font-size:11px;">Upload Failed: ${resp.statusText}</span>`;
                         }
                     } catch (error) {
                         console.error(error);
-                        previewCtx.innerHTML = '<span style="color:#f55;">Error</span>';
+                        previewCtx.innerHTML = `<span style="color:#f55; font-size:11px;">Error: ${error.message}</span>`;
                     }
                 };
 
                 const button = document.createElement("button");
                 button.textContent = `Load ${typeLabel}`;
                 Object.assign(button.style, { width: "100%", height: "24px", fontSize: "12px", cursor: "pointer", backgroundColor: "#222", color: "#ccc", border: "1px solid #444", borderRadius: "3px", marginTop: "2px" });
-                
+
                 const fileInput = document.createElement("input");
                 fileInput.type = "file";
                 fileInput.accept = acceptTypes;
                 fileInput.style.display = "none";
-                
-                button.addEventListener("click", (e) => { e.preventDefault(); fileInput.click(); });
+
+                button.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    fileInput.value = ""; // Reset to allow re-selection of same file
+                    fileInput.click();
+                });
                 fileInput.addEventListener("change", (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
-                
+
                 container.appendChild(previewCtx);
                 container.appendChild(button);
                 container.appendChild(fileInput);
 
                 this.addDOMWidget("loader_ui", "div", container, { serialize: false });
-                
+
                 this.onDragOver = (e) => { e.preventDefault(); return true; };
                 this.onDragDrop = (e) => {
                     e.preventDefault(); e.stopPropagation();
@@ -136,16 +134,16 @@ app.registerExtension({
                     return false;
                 };
 
-                if(fileWidget && fileWidget.value) this.updatePreview(fileWidget.value);
+                if (fileWidget && fileWidget.value) this.updatePreview?.(fileWidget.value);
                 this.setSize([300, 320]);
                 return r;
             };
 
             const onConfigure = nodeType.prototype.onConfigure;
-            nodeType.prototype.onConfigure = function() {
+            nodeType.prototype.onConfigure = function () {
                 onConfigure?.apply(this, arguments);
                 const fileWidget = this.widgets.find(w => w.name === widgetName);
-                if(fileWidget && this.updatePreview) this.updatePreview(fileWidget.value);
+                if (fileWidget && this.updatePreview) this.updatePreview(fileWidget.value);
             };
         }
     }
